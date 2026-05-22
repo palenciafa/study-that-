@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="grain"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="8" fill="#C8F56A"/>
+      <path d="M7 9h14M7 14h9M7 19h11" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="logo-text">logthat</span>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="log">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Log Session
+    </button>
+    <button class="nav-btn" data-tab="sessions">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
+      All Sessions
+    </button>
+    <button class="nav-btn" data-tab="weekly">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg>
+      Weekly
+    </button>
+    <button class="nav-btn" data-tab="monthly">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18M8 15h.01M12 15h.01M16 15h.01"/></svg>
+      Monthly
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="today-widget">
+      <div class="today-label">Today</div>
+      <div class="today-time" id="sidebar-today">0h 0m</div>
+      <div class="today-bar-wrap"><div class="today-bar" id="sidebar-bar"></div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- LOG TAB -->
+  <section class="tab active" id="tab-log">
+    <header class="page-header">
+      <h1>Log a Session</h1>
+      <p class="sub">Record what you studied, when, and for how long.</p>
+    </header>
+
+    <div class="form-card">
+      <div class="form-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="log-date" />
+        </div>
+        <div class="field">
+          <label>Subject / Topic</label>
+          <input type="text" id="log-subject" placeholder="e.g. Calculus, React, History…" />
+        </div>
+      </div>
+      <div class="form-row three">
+        <div class="field">
+          <label>Start Time</label>
+          <input type="time" id="log-start" />
+        </div>
+        <div class="field">
+          <label>End Time</label>
+          <input type="time" id="log-end" />
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="log-cat">
+            <option value="study">📚 Study</option>
+            <option value="review">🔁 Review</option>
+            <option value="practice">✏️ Practice</option>
+            <option value="reading">📖 Reading</option>
+            <option value="lecture">🎓 Lecture</option>
+            <option value="project">💻 Project</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes <span class="opt">(optional)</span></label>
+        <textarea id="log-notes" placeholder="What did you cover? Key takeaways, struggles, or wins…"></textarea>
+      </div>
+      <div class="duration-preview" id="dur-preview">Enter times to see duration</div>
+      <button class="btn-add" id="btn-log">Add Session →</button>
+    </div>
+
+    <div class="quick-stats" id="log-quick-stats"></div>
+  </section>
+
+  <!-- SESSIONS TAB -->
+  <section class="tab" id="tab-sessions">
+    <header class="page-header">
+      <h1>All Sessions</h1>
+      <div class="filter-row">
+        <select id="filter-cat" onchange="renderSessions()">
+          <option value="">All categories</option>
+          <option value="study">📚 Study</option>
+          <option value="review">🔁 Review</option>
+          <option value="practice">✏️ Practice</option>
+          <option value="reading">📖 Reading</option>
+          <option value="lecture">🎓 Lecture</option>
+          <option value="project">💻 Project</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Search subjects…" oninput="renderSessions()" />
+      </div>
+    </header>
+    <div class="stat-row" id="sessions-stats"></div>
+    <div class="session-list" id="session-list"></div>
+  </section>
+
+  <!-- WEEKLY TAB -->
+  <section class="tab" id="tab-weekly">
+    <header class="page-header">
+      <h1>Weekly Overview</h1>
+      <p class="sub" id="week-range-label"></p>
+    </header>
+    <div class="stat-row" id="week-stats"></div>
+    <div class="chart-card">
+      <div class="bar-chart" id="week-chart"></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <h2 class="section-title">Sessions</h2>
+        <div class="session-list" id="week-session-list"></div>
+      </div>
+      <div>
+        <h2 class="section-title">By Category</h2>
+        <div class="cat-breakdown" id="week-cat-breakdown"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MONTHLY TAB -->
+  <section class="tab" id="tab-monthly">
+    <header class="page-header">
+      <div class="month-nav-header">
+        <h1 id="month-heading">May 2025</h1>
+        <div class="month-nav-btns">
+          <button class="nav-arrow" onclick="changeMonth(-1)">←</button>
+          <button class="nav-arrow" onclick="changeMonth(1)">→</button>
+        </div>
+      </div>
+    </header>
+    <div class="stat-row" id="month-stats"></div>
+    <div class="chart-card cal-card">
+      <div class="cal-weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div class="cal-grid" id="month-cal"></div>
+      <div class="cal-legend">
+        <span class="leg-item"><span class="leg-dot" style="background:#2a2a2a"></span>None</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#4d6e2a"></span>0–1h</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#7ab33d"></span>1–3h</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#aee55c"></span>3–5h</span>
+        <span class="leg-item"><span class="leg-dot" style="background:#C8F56A"></span>5h+</span>
+      </div>
+    </div>
+    <div class="two-col">
+      <div>
+        <h2 class="section-title">Top Subjects</h2>
+        <div id="month-subjects"></div>
+      </div>
+      <div>
+        <h2 class="section-title">Streak</h2>
+        <div class="streak-box" id="streak-box"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
