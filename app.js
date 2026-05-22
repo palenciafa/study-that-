@@ -82,13 +82,44 @@ async function doSignup() {
   const name  = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim();
   const pass  = document.getElementById('signup-password').value;
-  if (!name || !email || !pass) { authMsg('Please fill all fields.'); return; }
-  if (pass.length < 6) { authMsg('Password must be at least 6 characters.'); return; }
+
+  if (!name || !email || !pass) {
+    authMsg('Please fill all fields.');
+    return;
+  }
+
+  if (pass.length < 6) {
+    authMsg('Password must be at least 6 characters.');
+    return;
+  }
+
   authMsg('Creating account…', 'ok');
-  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { display_name: name } } });
-  if (error) { authMsg(error.message); return; }
-  if (data.user && !data.session) { authMsg('Check your email to confirm your account, then sign in.', 'ok'); return; }
-  initApp(data.user);
+
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password: pass,
+    options: {
+      data: { display_name: name }
+    }
+  });
+
+  if (error) {
+    authMsg(error.message);
+    return;
+  }
+
+  // Force the user to stay on authentication screen after signing up
+  await sb.auth.signOut();
+
+  currentUser = null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('auth-screen').style.display = 'flex';
+
+  // Stay on signup panel and show confirmation message
+  document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('auth-signup').classList.add('active');
+
+  authMsg('Account created! Please confirm your email first, then log in.', 'ok');
 }
 
 async function doForgot() {
