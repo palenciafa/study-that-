@@ -21,9 +21,9 @@ html { font-size: 16px; scroll-behavior: smooth; }
   --sidebar-w: 210px;
   --radius: 14px;
   --radius-sm: 8px;
-  --font: 'Geist', sans-serif;
-  --font-serif: 'Instrument Serif', serif;
-  --font-mono: 'Geist Mono', monospace;
+  --font: 'DM Mono', monospace;
+  --font-serif: 'Inter', sans-serif;
+  --font-mono: 'DM Mono', monospace;
 }
 [data-theme="light"] {
   --bg: #f5f5f7;
@@ -41,6 +41,16 @@ html { font-size: 16px; scroll-behavior: smooth; }
   --danger: #cc3333;
   --warn: #c07a10;
 }
+
+[data-theme="light"] .btn-primary {
+  color: #ffffff;
+}
+
+[data-theme="light"] #timer-action-btn {
+  color: #ffffff;
+}
+
+
 [data-theme="green"] {
   --bg: #0a1208;
   --surface: #111a0e;
@@ -152,6 +162,7 @@ body {
   display: flex; flex-direction: column;
   z-index: 200;
   transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  font-weight: bold;
 }
 .sidebar-top { flex: 1; padding: 1.25rem 0.75rem; overflow-y: auto; }
 .logo {
@@ -235,7 +246,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  background: var(--accent); color: #0a1208; border: none; border-radius: var(--radius-sm);
+  background: var(--accent); color: #212f1f; border: none; border-radius: var(--radius-sm);
   font-family: var(--font); font-size: 0.875rem; font-weight: 600; padding: 0.7rem 1.4rem;
   cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
@@ -266,7 +277,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 /* ─── Cards ──────────────────────────────────────────── */
 .form-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 1.5rem; max-width: 660px;
+  padding: 1.5rem; max-width: 1500px;
 }
 .chart-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);

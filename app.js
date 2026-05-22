@@ -9,7 +9,14 @@ const CAT_COLORS = {
   study: '#378ADD', review: '#1D9E75', practice: '#D4537E',
   reading: '#EF9F27', lecture: '#7F77DD', project: '#D85A30'
 };
-const CAT_EMOJI = { study:'📚', review:'🔁', practice:'✏️', reading:'📖', lecture:'🎓', project:'💻' };
+const CAT_EMOJI = {
+  study: '',
+  review: '',
+  practice: '',
+  reading: '',
+  lecture: '',
+  project: ''
+};
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
