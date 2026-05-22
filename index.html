@@ -1,116 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Study Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyLog — BlackStride Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<div class="grain"></div>
-
-<aside class="sidebar" id="sidebar">
-  <div class="logo">
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect width="28" height="28" rx="8" fill="#C8F56A"/>
-      <path d="M7 9h14M7 14h9M7 19h11" stroke="#0d0d0d" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <span class="logo-text">logthat</span>
+<!-- ═══ AUTH SCREEN ═══════════════════════════════════════ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-bg">
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+    <div class="auth-orb auth-orb-3"></div>
   </div>
-
-  <nav class="nav">
-    <button class="nav-btn active" data-tab="log">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      Log Session
-    </button>
-    <button class="nav-btn" data-tab="sessions">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg>
-      All Sessions
-    </button>
-    <button class="nav-btn" data-tab="weekly">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg>
-      Weekly
-    </button>
-    <button class="nav-btn" data-tab="monthly">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18M8 15h.01M12 15h.01M16 15h.01"/></svg>
-      Monthly
-    </button>
-  </nav>
-
-  <div class="sidebar-footer">
-    <div class="today-widget">
-      <div class="today-label">Today</div>
-      <div class="today-time" id="sidebar-today">0h 0m</div>
-      <div class="today-bar-wrap"><div class="today-bar" id="sidebar-bar"></div></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span>StudyLog</span>
     </div>
+
+    <!-- Login -->
+    <div id="auth-login" class="auth-panel active">
+      <h2>Welcome back</h2>
+      <p class="auth-sub">Sign in to your account</p>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com"/></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"/></div>
+      <div class="auth-forgot"><button onclick="showPanel('forgot')">Forgot password?</button></div>
+      <button class="btn-primary full" onclick="doLogin()">Sign in</button>
+      <p class="auth-switch">No account? <button onclick="showPanel('signup')">Sign up</button></p>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="auth-signup" class="auth-panel">
+      <h2>Create account</h2>
+      <p class="auth-sub">Start tracking your studies</p>
+      <div class="field"><label>Display Name</label><input type="text" id="signup-name" placeholder="Your name"/></div>
+      <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@email.com"/></div>
+      <div class="field"><label>Password</label><input type="password" id="signup-password" placeholder="Min. 6 characters"/></div>
+      <button class="btn-primary full" onclick="doSignup()">Create account</button>
+      <p class="auth-switch">Have an account? <button onclick="showPanel('login')">Sign in</button></p>
+    </div>
+
+    <!-- Forgot -->
+    <div id="auth-forgot" class="auth-panel">
+      <h2>Reset password</h2>
+      <p class="auth-sub">We'll send a reset link to your email</p>
+      <div class="field"><label>Email</label><input type="email" id="forgot-email" placeholder="you@email.com"/></div>
+      <button class="btn-primary full" onclick="doForgot()">Send reset link</button>
+      <p class="auth-switch"><button onclick="showPanel('login')">← Back to login</button></p>
+    </div>
+
+    <div class="auth-msg" id="auth-msg"></div>
   </div>
-</aside>
+</div>
 
-<main class="main">
-  <button class="hamburger" id="hamburger" aria-label="Toggle menu">
-    <span></span><span></span><span></span>
-  </button>
+<!-- ═══ APP ═══════════════════════════════════════════════ -->
+<div id="app" class="app hidden">
 
-  <!-- LOG TAB -->
-  <section class="tab active" id="tab-log">
-    <header class="page-header">
-      <h1>Log a Session</h1>
-      <p class="sub">Record what you studied, when, and for how long.</p>
-    </header>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="logo"><div class="logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span>StudyLog</span></div>
+      <nav class="nav">
+        <button class="nb active" data-tab="dashboard"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</button>
+        <button class="nb" data-tab="log"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Log Session</button>
+        <button class="nb" data-tab="timer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Timer</button>
+        <button class="nb" data-tab="sessions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg> Sessions</button>
+        <button class="nb" data-tab="weekly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg> Weekly</button>
+        <button class="nb" data-tab="monthly"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg> Monthly</button>
+        <button class="nb" data-tab="achievements"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15l-4.243 4.243a1 1 0 01-1.415-1.415L12 12.17l5.657 5.657a1 1 0 01-1.415 1.415L12 15zM8 6h8M5 3h14"/></svg> Badges</button>
+        <button class="nb" data-tab="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profile</button>
+      </nav>
+    </div>
+    <div class="sidebar-today">
+      <div class="st-label">Today</div>
+      <div class="st-val" id="sb-today">0m</div>
+      <div class="st-bar"><div class="st-fill" id="sb-fill"></div></div>
+      <div class="st-goal" id="sb-goal">of 4h goal</div>
+    </div>
+  </aside>
 
-    <div class="form-card">
-      <div class="form-row">
-        <div class="field">
-          <label>Date</label>
-          <input type="date" id="log-date" />
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+
+  <main class="main">
+
+    <!-- ─── DASHBOARD ─────────────────────────────────── -->
+    <section class="tab active" id="tab-dashboard">
+      <header class="ph"><h1>Dashboard</h1><p class="sub" id="dash-greeting"></p></header>
+      <div class="dash-stats" id="dash-stats"></div>
+      <div class="dash-grid">
+        <div class="dash-card">
+          <h3 class="card-title">This Week</h3>
+          <div class="mini-bar-chart" id="dash-week-chart"></div>
         </div>
-        <div class="field">
-          <label>Subject / Topic</label>
-          <input type="text" id="log-subject" placeholder="e.g. Calculus, React, History…" />
+        <div class="dash-card">
+          <h3 class="card-title">Top Subjects</h3>
+          <div id="dash-top-subjects"></div>
         </div>
       </div>
-      <div class="form-row three">
-        <div class="field">
-          <label>Start Time</label>
-          <input type="time" id="log-start" />
+      <div class="dash-card mt-12">
+        <h3 class="card-title">Recent Sessions</h3>
+        <div class="slist" id="dash-recent"></div>
+      </div>
+    </section>
+
+    <!-- ─── LOG SESSION ─────────────────────────────────── -->
+    <section class="tab" id="tab-log">
+      <header class="ph"><h1>Log a Session</h1><p class="sub">Record what you studied.</p></header>
+      <div class="form-card">
+        <div class="gr2">
+          <div class="field"><label>Date</label><input type="date" id="l-date"/></div>
+          <div class="field">
+            <label>Subject <button class="link-btn" onclick="showSubjectManager()">+ Manage</button></label>
+            <select id="l-subj"><option value="">Select subject…</option></select>
+          </div>
         </div>
-        <div class="field">
-          <label>End Time</label>
-          <input type="time" id="log-end" />
+        <div class="gr3">
+          <div class="field"><label>Start</label><input type="time" id="l-start"/></div>
+          <div class="field"><label>End</label><input type="time" id="l-end"/></div>
+          <div class="field"><label>Category</label>
+            <select id="l-cat">
+              <option value="study">📚 Study</option>
+              <option value="review">🔁 Review</option>
+              <option value="practice">✏️ Practice</option>
+              <option value="reading">📖 Reading</option>
+              <option value="lecture">🎓 Lecture</option>
+              <option value="project">💻 Project</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label>Category</label>
-          <select id="log-cat">
-            <option value="study">📚 Study</option>
-            <option value="review">🔁 Review</option>
-            <option value="practice">✏️ Practice</option>
-            <option value="reading">📖 Reading</option>
-            <option value="lecture">🎓 Lecture</option>
-            <option value="project">💻 Project</option>
+        <div class="field"><label>Notes <span class="opt">(optional)</span></label><textarea id="l-notes" placeholder="Key takeaways, struggles, wins…"></textarea></div>
+        <div class="dur-preview" id="dur-p">Enter start and end times to preview duration</div>
+        <button class="btn-primary" onclick="logSession()">Save Session</button>
+      </div>
+    </section>
+
+    <!-- ─── TIMER ─────────────────────────────────── -->
+    <section class="tab" id="tab-timer">
+      <header class="ph"><h1>Focus Timer</h1><p class="sub">Pomodoro-style. Work deep, rest well.</p></header>
+      <div class="timer-container">
+        <div class="timer-mode-btns">
+          <button class="mode-btn active" onclick="setMode('focus',25)" id="mode-focus">Focus 25m</button>
+          <button class="mode-btn" onclick="setMode('short',5)" id="mode-short">Break 5m</button>
+          <button class="mode-btn" onclick="setMode('long',15)" id="mode-long">Long Break 15m</button>
+          <button class="mode-btn" onclick="showCustomTimer()" id="mode-custom">Custom</button>
+        </div>
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring" viewBox="0 0 220 220">
+            <circle class="ring-track" cx="110" cy="110" r="96"/>
+            <circle class="ring-progress" id="ring-progress" cx="110" cy="110" r="96"/>
+          </svg>
+          <div class="timer-display">
+            <div class="timer-time" id="timer-display">25:00</div>
+            <div class="timer-label" id="timer-label">FOCUS</div>
+          </div>
+        </div>
+        <div class="timer-controls">
+          <button class="timer-btn" onclick="timerAction()" id="timer-action-btn">Start</button>
+          <button class="timer-btn secondary" onclick="resetTimer()">Reset</button>
+        </div>
+        <div class="timer-session-save" id="timer-save-area" style="display:none">
+          <div class="tss-inner">
+            <p class="tss-title">Session complete! Save it?</p>
+            <div class="gr2" style="margin-top:10px">
+              <div class="field"><label>Subject</label>
+                <select id="t-subj"><option value="">Select…</option></select>
+              </div>
+              <div class="field"><label>Category</label>
+                <select id="t-cat">
+                  <option value="study">📚 Study</option>
+                  <option value="review">🔁 Review</option>
+                  <option value="practice">✏️ Practice</option>
+                  <option value="reading">📖 Reading</option>
+                  <option value="lecture">🎓 Lecture</option>
+                  <option value="project">💻 Project</option>
+                </select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:8px"><label>Notes</label><textarea id="t-notes" placeholder="What did you work on?"></textarea></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-primary" onclick="saveTimerSession()">Save Session</button>
+              <button class="btn-secondary" onclick="dismissTimerSave()">Dismiss</button>
+            </div>
+          </div>
+        </div>
+        <div class="timer-custom-wrap" id="timer-custom-wrap" style="display:none">
+          <div class="tss-inner">
+            <p class="tss-title">Custom duration</p>
+            <div class="field" style="margin-top:10px"><label>Minutes</label><input type="number" id="custom-mins" min="1" max="240" value="45" style="width:100%"/></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn-primary" onclick="applyCustomTimer()">Set Timer</button>
+              <button class="btn-secondary" onclick="document.getElementById('timer-custom-wrap').style.display='none'">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="timer-pomodoro-count">
+          <span id="pomodoro-count">0</span> pomodoros completed today
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SESSIONS ─────────────────────────────────── -->
+    <section class="tab" id="tab-sessions">
+      <header class="ph">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div><h1>All Sessions</h1></div>
+          <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+        <div class="filter-row">
+          <select id="f-cat" onchange="renderSessions()"><option value="">All categories</option><option value="study">Study</option><option value="review">Review</option><option value="practice">Practice</option><option value="reading">Reading</option><option value="lecture">Lecture</option><option value="project">Project</option></select>
+          <select id="f-subj" onchange="renderSessions()"><option value="">All subjects</option></select>
+          <input type="text" id="f-search" placeholder="Search…" oninput="renderSessions()"/>
+        </div>
+      </header>
+      <div class="stat-row" id="sessions-stats"></div>
+      <div class="slist" id="session-list"></div>
+    </section>
+
+    <!-- ─── WEEKLY ─────────────────────────────────── -->
+    <section class="tab" id="tab-weekly">
+      <header class="ph"><h1>Weekly Overview</h1><p class="sub" id="wk-range"></p></header>
+      <div class="stat-row" id="wk-stats"></div>
+      <div class="chart-card">
+        <div class="bar-chart" id="wk-chart"></div>
+      </div>
+      <div class="two-col">
+        <div><h3 class="card-title">Sessions This Week</h3><div class="slist" id="wk-list"></div></div>
+        <div><h3 class="card-title">By Category</h3><div id="wk-cats"></div></div>
+      </div>
+    </section>
+
+    <!-- ─── MONTHLY ─────────────────────────────────── -->
+    <section class="tab" id="tab-monthly">
+      <header class="ph">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h1 id="m-heading">May 2026</h1>
+          <div style="display:flex;gap:6px">
+            <button class="nav-arrow" onclick="changeMonth(-1)">←</button>
+            <button class="nav-arrow" onclick="changeMonth(1)">→</button>
+          </div>
+        </div>
+      </header>
+      <div class="stat-row" id="m-stats"></div>
+      <div class="chart-card">
+        <div class="cal-wd"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+        <div class="cal-grid" id="m-cal"></div>
+        <div class="cal-legend">
+          <span class="li"><span class="ld" style="background:var(--surface2)"></span>None</span>
+          <span class="li"><span class="ld" style="background:#2d5a27"></span>&lt;1h</span>
+          <span class="li"><span class="ld" style="background:#4a8c3f"></span>1–3h</span>
+          <span class="li"><span class="ld" style="background:#6ab84f"></span>3–5h</span>
+          <span class="li"><span class="ld" style="background:#8de56a"></span>5h+</span>
+        </div>
+      </div>
+      <!-- Day detail panel -->
+      <div class="day-detail-panel" id="day-detail" style="display:none">
+        <div class="ddp-header">
+          <h3 id="ddp-title">Sessions for May 22</h3>
+          <button onclick="document.getElementById('day-detail').style.display='none'">✕</button>
+        </div>
+        <div class="slist" id="ddp-list"></div>
+      </div>
+      <div class="two-col mt-12">
+        <div><h3 class="card-title">Top Subjects</h3><div id="m-subjs"></div></div>
+        <div><h3 class="card-title">Streak</h3><div class="streak-box" id="m-streak"></div></div>
+      </div>
+    </section>
+
+    <!-- ─── ACHIEVEMENTS ─────────────────────────────────── -->
+    <section class="tab" id="tab-achievements">
+      <header class="ph"><h1>Achievements</h1><p class="sub">Unlock badges as you build your study habit.</p></header>
+      <div class="badges-grid" id="badges-grid"></div>
+    </section>
+
+    <!-- ─── PROFILE ─────────────────────────────────── -->
+    <section class="tab" id="tab-profile">
+      <header class="ph"><h1>Profile</h1><p class="sub">Manage your account and preferences.</p></header>
+      <div class="form-card" style="max-width:480px">
+        <div class="profile-avatar" id="profile-avatar"></div>
+        <div class="field"><label>Display Name</label><input type="text" id="p-name" placeholder="Your name"/></div>
+        <div class="field"><label>Account Email</label><input type="email" id="p-email" disabled style="opacity:0.5"/></div>
+        <div class="field"><label>Daily Study Goal</label>
+          <select id="p-goal">
+            <option value="60">1 hour</option>
+            <option value="120">2 hours</option>
+            <option value="180">3 hours</option>
+            <option value="240" selected>4 hours</option>
+            <option value="300">5 hours</option>
+            <option value="360">6 hours</option>
           </select>
         </div>
+        <div class="field"><label>Theme</label>
+          <select id="p-theme" onchange="applyTheme(this.value)">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="green">Forest</option>
+            <option value="blue">Ocean</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+          <button class="btn-danger" onclick="doLogout()">Logout</button>
+        </div>
       </div>
-      <div class="field">
-        <label>Notes <span class="opt">(optional)</span></label>
-        <textarea id="log-notes" placeholder="What did you cover? Key takeaways, struggles, or wins…"></textarea>
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══ MODALS ════════════════════════════════════════════ -->
+
+<!-- Subject Manager -->
+<div class="modal-overlay" id="modal-subjects" onclick="closeModal('modal-subjects')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Manage Subjects</h3><button onclick="closeModal('modal-subjects')">✕</button></div>
+    <div class="field"><label>New Subject</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="new-subject-input" placeholder="e.g. AZ900, Linux, Python…" style="flex:1"/>
+        <button class="btn-primary" onclick="addSubject()">Add</button>
       </div>
-      <div class="duration-preview" id="dur-preview">Enter times to see duration</div>
-      <button class="btn-add" id="btn-log">Add Session →</button>
     </div>
+    <div class="subject-chips" id="subject-chips"></div>
+  </div>
+</div>
 
-    <div class="quick-stats" id="log-quick-stats"></div>
-  </section>
-
-  <!-- SESSIONS TAB -->
-  <section class="tab" id="tab-sessions">
-    <header class="page-header">
-      <h1>All Sessions</h1>
-      <div class="filter-row">
-        <select id="filter-cat" onchange="renderSessions()">
-          <option value="">All categories</option>
+<!-- Edit Session -->
+<div class="modal-overlay" id="modal-edit" onclick="closeModal('modal-edit')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Edit Session</h3><button onclick="closeModal('modal-edit')">✕</button></div>
+    <div class="gr2">
+      <div class="field"><label>Date</label><input type="date" id="e-date"/></div>
+      <div class="field"><label>Subject</label><select id="e-subj"></select></div>
+    </div>
+    <div class="gr3">
+      <div class="field"><label>Start</label><input type="time" id="e-start"/></div>
+      <div class="field"><label>End</label><input type="time" id="e-end"/></div>
+      <div class="field"><label>Category</label>
+        <select id="e-cat">
           <option value="study">📚 Study</option>
           <option value="review">🔁 Review</option>
           <option value="practice">✏️ Practice</option>
@@ -118,75 +353,18 @@
           <option value="lecture">🎓 Lecture</option>
           <option value="project">💻 Project</option>
         </select>
-        <input type="text" id="filter-search" placeholder="Search subjects…" oninput="renderSessions()" />
-      </div>
-    </header>
-    <div class="stat-row" id="sessions-stats"></div>
-    <div class="session-list" id="session-list"></div>
-  </section>
-
-  <!-- WEEKLY TAB -->
-  <section class="tab" id="tab-weekly">
-    <header class="page-header">
-      <h1>Weekly Overview</h1>
-      <p class="sub" id="week-range-label"></p>
-    </header>
-    <div class="stat-row" id="week-stats"></div>
-    <div class="chart-card">
-      <div class="bar-chart" id="week-chart"></div>
-    </div>
-    <div class="two-col">
-      <div>
-        <h2 class="section-title">Sessions</h2>
-        <div class="session-list" id="week-session-list"></div>
-      </div>
-      <div>
-        <h2 class="section-title">By Category</h2>
-        <div class="cat-breakdown" id="week-cat-breakdown"></div>
       </div>
     </div>
-  </section>
-
-  <!-- MONTHLY TAB -->
-  <section class="tab" id="tab-monthly">
-    <header class="page-header">
-      <div class="month-nav-header">
-        <h1 id="month-heading">May 2025</h1>
-        <div class="month-nav-btns">
-          <button class="nav-arrow" onclick="changeMonth(-1)">←</button>
-          <button class="nav-arrow" onclick="changeMonth(1)">→</button>
-        </div>
-      </div>
-    </header>
-    <div class="stat-row" id="month-stats"></div>
-    <div class="chart-card cal-card">
-      <div class="cal-weekdays">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-      </div>
-      <div class="cal-grid" id="month-cal"></div>
-      <div class="cal-legend">
-        <span class="leg-item"><span class="leg-dot" style="background:#2a2a2a"></span>None</span>
-        <span class="leg-item"><span class="leg-dot" style="background:#4d6e2a"></span>0–1h</span>
-        <span class="leg-item"><span class="leg-dot" style="background:#7ab33d"></span>1–3h</span>
-        <span class="leg-item"><span class="leg-dot" style="background:#aee55c"></span>3–5h</span>
-        <span class="leg-item"><span class="leg-dot" style="background:#C8F56A"></span>5h+</span>
-      </div>
-    </div>
-    <div class="two-col">
-      <div>
-        <h2 class="section-title">Top Subjects</h2>
-        <div id="month-subjects"></div>
-      </div>
-      <div>
-        <h2 class="section-title">Streak</h2>
-        <div class="streak-box" id="streak-box"></div>
-      </div>
-    </div>
-  </section>
-</main>
+    <div class="field"><label>Notes</label><textarea id="e-notes"></textarea></div>
+    <input type="hidden" id="e-id"/>
+    <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
+<audio id="timer-done-sfx" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJiVkHBJR2mMi4htTkVSapGHgm9ZZXeSj4dmVlZlfoiEf2ddYm19f3x1Y2Flb3t4dHJtcnV4dnd2dXZ1dXZ3eHh3dnV0c3V3eXt6eHd2dnZ3d3Z1c3JwbW5wcnZ4eXl4d3Z2dnZ3d3d2dXNybGtucHJ2eHl5eHd2dnV1dXV1dXV0c3NycnN1d3l6eXh3d3d3d3d3dnV0c3JxcXFyc3R2d3h4eHh4eHh4eHh3d3Z1dHNycnNzdHZ3eHh4eHh4eHh4d3Z1dHNycXFyc3R1d3h5eXl5eXl5eXl4d3Z1dHNycHBxcnN1d3h4"></audio>
 
+<script src="supabase-config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
