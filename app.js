@@ -95,7 +95,7 @@ async function doSignup() {
 
   authMsg('Creating account…', 'ok');
 
-  const { data, error } = await sb.auth.signUp({
+  const { error } = await sb.auth.signUp({
     email,
     password: pass,
     options: {
@@ -108,16 +108,12 @@ async function doSignup() {
     return;
   }
 
-  // Force the user to stay on authentication screen after signing up
   await sb.auth.signOut();
 
   currentUser = null;
   document.getElementById('app').classList.add('hidden');
   document.getElementById('auth-screen').style.display = 'flex';
-
-  // Stay on signup panel and show confirmation message
-  document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('auth-signup').classList.add('active');
+  showPanel('signup');
 
   authMsg('Account created! Please confirm your email first, then log in.', 'ok');
 }
@@ -799,6 +795,29 @@ document.getElementById('new-subject-input').addEventListener('keydown', e=>{ if
 /* ── Boot ────────────────────────────────────────────── */
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+  const isEmailConfirmation =
+    urlParams.get('type') === 'signup' ||
+    hashParams.get('type') === 'signup' ||
+    window.location.hash.includes('type=signup');
+
+  if (isEmailConfirmation) {
+    await sb.auth.signOut();
+
+    currentUser = null;
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('auth-screen').style.display = 'flex';
+    showPanel('login');
+
+    authMsg('Email confirmed! Please log in to continue.', 'ok');
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
   if (session?.user) {
     initApp(session.user);
   }
