@@ -1,7 +1,11 @@
 // ════════════════════════════════════════════════════
-//  StudyLog App — app.js
-//  All logic: auth, sessions, timer, subjects,
-//  achievements, profile, weekly/monthly views
+//  logthat! — app.js
+//  Fixes applied:
+//  1. Email confirm → redirect to login (not dashboard)
+//  2. Better mobile responsiveness (CSS)
+//  3. Onboarding flow (goal + theme) for new users
+//  4. Profile save only on button click (no auto-save)
+//  5. Two log modes: Manual (start/end) + Live (auto end)
 // ════════════════════════════════════════════════════
 
 /* ── Constants ──────────────────────────────────────── */
@@ -9,14 +13,7 @@ const CAT_COLORS = {
   study: '#378ADD', review: '#1D9E75', practice: '#D4537E',
   reading: '#EF9F27', lecture: '#7F77DD', project: '#D85A30'
 };
-const CAT_EMOJI = {
-  study: '',
-  review: '',
-  practice: '',
-  reading: '',
-  lecture: '',
-  project: ''
-};
+const CAT_EMOJI = { study:'', review:'', practice:'', reading:'', lecture:'', project:'' };
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -27,6 +24,15 @@ let allSessions = [];
 let subjects = [];
 let pomodoroCount = 0;
 let viewMonth = { y: new Date().getFullYear(), m: new Date().getMonth() };
+
+// Live session state
+let liveSessionActive = false;
+let liveStartTime = null;
+let liveElapsedInterval = null;
+
+// Onboarding state
+let onboardGoal = 240;
+let onboardTheme = 'dark';
 
 /* ── Utility ─────────────────────────────────────────── */
 function fmtD(mins) {
@@ -83,39 +89,25 @@ async function doSignup() {
   const email = document.getElementById('signup-email').value.trim();
   const pass  = document.getElementById('signup-password').value;
 
-  if (!name || !email || !pass) {
-    authMsg('Please fill all fields.');
-    return;
-  }
-
-  if (pass.length < 6) {
-    authMsg('Password must be at least 6 characters.');
-    return;
-  }
+  if (!name || !email || !pass) { authMsg('Please fill all fields.'); return; }
+  if (pass.length < 6) { authMsg('Password must be at least 6 characters.'); return; }
 
   authMsg('Creating account…', 'ok');
 
   const { error } = await sb.auth.signUp({
-    email,
-    password: pass,
-    options: {
-      data: { display_name: name }
-    }
+    email, password: pass,
+    options: { data: { display_name: name } }
   });
 
-  if (error) {
-    authMsg(error.message);
-    return;
-  }
+  if (error) { authMsg(error.message); return; }
 
+  // Always sign out after signup — user must confirm email first
   await sb.auth.signOut();
-
   currentUser = null;
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('auth-screen').style.display = 'flex';
-  showPanel('signup');
 
-  authMsg('Account created! Please confirm your email first, then log in.', 'ok');
+  // Show login panel with confirmation message
+  showPanel('login');
+  authMsg('Account created! Please check your email to confirm, then log in here.', 'ok');
 }
 
 async function doForgot() {
@@ -129,6 +121,7 @@ async function doForgot() {
 async function doLogout() {
   await sb.auth.signOut();
   currentUser = null; userProfile = {}; allSessions = []; subjects = [];
+  stopLiveSessionSilently();
   document.getElementById('app').classList.add('hidden');
   document.getElementById('auth-screen').style.display = 'flex';
   showPanel('login');
@@ -148,6 +141,14 @@ async function initApp(user) {
   applyTheme(userProfile.theme || 'dark');
   document.getElementById('l-date').value = todayStr();
   document.getElementById('dash-greeting').textContent = greeting();
+
+  // Show onboarding if profile is brand new (no daily_goal set yet)
+  const isNew = !userProfile.daily_goal || userProfile._is_new;
+  if (isNew) {
+    const displayName = userProfile.display_name || user.user_metadata?.display_name || 'there';
+    document.getElementById('onboard-name').textContent = displayName;
+    openModal('modal-onboarding');
+  }
 }
 
 function greeting() {
@@ -158,10 +159,62 @@ function greeting() {
   return `Good evening, ${name} 🌙`;
 }
 
+/* ── Onboarding ──────────────────────────────────────── */
+// Goal option click — toggle active class
+document.querySelectorAll('.goal-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.goal-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    onboardGoal = parseInt(btn.dataset.val);
+  });
+});
+
+// Theme option click in onboarding
+document.querySelectorAll('.theme-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.theme-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    onboardTheme = btn.dataset.val;
+    applyTheme(onboardTheme);
+  });
+});
+
+async function saveOnboarding() {
+  const name = userProfile.display_name || currentUser.user_metadata?.display_name || '';
+  const { error } = await sb.from('profiles').upsert({
+    id: currentUser.id,
+    display_name: name,
+    daily_goal: onboardGoal,
+    theme: onboardTheme
+  });
+  if (error) { toast('Could not save preferences: ' + error.message, true); return; }
+  userProfile = { ...userProfile, daily_goal: onboardGoal, theme: onboardTheme, display_name: name };
+  // Update profile form
+  document.getElementById('p-goal').value = onboardGoal;
+  document.getElementById('p-theme').value = onboardTheme;
+  applyTheme(onboardTheme);
+  updateSidebar();
+  closeModal('modal-onboarding');
+  toast('Preferences saved! Welcome to logthat 🎉');
+}
+
 /* ── Supabase DB helpers ──────────────────────────────── */
 async function loadProfile() {
-  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-  userProfile = data || { id: currentUser.id, display_name: currentUser.user_metadata?.display_name || '', daily_goal: 240, theme: 'dark' };
+  const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (!data || error) {
+    // New user — profile doesn't exist yet
+    userProfile = {
+      id: currentUser.id,
+      display_name: currentUser.user_metadata?.display_name || '',
+      daily_goal: 0,   // 0 triggers onboarding
+      theme: 'dark',
+      _is_new: true
+    };
+  } else {
+    userProfile = data;
+    userProfile._is_new = !data.daily_goal; // treat 0/null as new
+  }
+  // Populate profile form fields (read-only display — NOT auto-save)
   document.getElementById('p-name').value = userProfile.display_name || '';
   document.getElementById('p-email').value = currentUser.email;
   document.getElementById('p-goal').value = userProfile.daily_goal || 240;
@@ -172,6 +225,7 @@ async function loadProfile() {
   document.getElementById('sb-goal').textContent = `of ${sbGoal} goal`;
 }
 
+// FIX: saveProfile only runs when Save button is clicked — theme preview is separate
 async function saveProfile() {
   const name  = document.getElementById('p-name').value.trim();
   const goal  = parseInt(document.getElementById('p-goal').value);
@@ -181,7 +235,15 @@ async function saveProfile() {
   userProfile = { ...userProfile, display_name: name, daily_goal: goal, theme };
   applyTheme(theme);
   updateSidebar();
+  // Update avatar initial
+  document.getElementById('profile-avatar').textContent = (name || currentUser.email || '?').charAt(0).toUpperCase();
   toast('Profile saved ✓');
+}
+
+// Preview theme without saving (fixes auto-save bug)
+function previewThemeProfile(val) {
+  applyTheme(val);
+  // Don't save — only applyTheme for instant preview
 }
 
 async function loadSubjects() {
@@ -211,7 +273,7 @@ async function deleteSubject(name) {
 }
 
 function updateSubjectDropdowns() {
-  ['l-subj', 't-subj', 'e-subj', 'f-subj'].forEach(id => {
+  ['l-subj', 't-subj', 'e-subj', 'f-subj', 'live-subj'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const prev = el.value;
@@ -228,14 +290,94 @@ async function loadSessions() {
   allSessions = data || [];
 }
 
-/* ── Log Session ─────────────────────────────────────── */
+/* ── Log Mode Switch ──────────────────────────────────── */
+function switchLogMode(mode) {
+  document.getElementById('lmode-manual').classList.toggle('active', mode === 'manual');
+  document.getElementById('lmode-live').classList.toggle('active', mode === 'live');
+  document.getElementById('log-manual-panel').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('log-live-panel').style.display  = mode === 'live'   ? 'block' : 'none';
+  if (mode === 'live') updateSubjectDropdowns();
+}
+
+/* ── Live Session ─────────────────────────────────────── */
+function startLiveSession() {
+  const subj = document.getElementById('live-subj').value;
+  if (!subj) { toast('Select a subject first', true); return; }
+  liveSessionActive = true;
+  liveStartTime = new Date();
+
+  document.getElementById('live-setup').style.display = 'none';
+  document.getElementById('live-running').style.display = 'block';
+  document.getElementById('live-subject-display').textContent = subj;
+  document.getElementById('live-started-at').textContent = `Started at ${fmtTime(liveStartTime.toTimeString().slice(0,5))}`;
+  document.getElementById('live-notes-running').value = document.getElementById('live-notes').value;
+
+  liveElapsedInterval = setInterval(updateLiveElapsed, 1000);
+  updateLiveElapsed();
+}
+
+function updateLiveElapsed() {
+  if (!liveStartTime) return;
+  const elapsed = Math.floor((Date.now() - liveStartTime) / 1000);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  document.getElementById('live-elapsed').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+async function stopLiveSession() {
+  if (!liveSessionActive || !liveStartTime) return;
+  clearInterval(liveElapsedInterval);
+  const endTime = new Date();
+  const subj  = document.getElementById('live-subj').value;
+  const cat   = document.getElementById('live-cat').value;
+  const notes = document.getElementById('live-notes-running').value.trim();
+
+  const fmt = d => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const startStr = fmt(liveStartTime);
+  const endStr   = fmt(endTime);
+  const dateStr  = liveStartTime.toISOString().slice(0, 10);
+
+  const ok = await logSession({ date: dateStr, subj, start: startStr, end: endStr, cat, notes });
+  if (ok) {
+    resetLiveSession();
+    toast('Live session saved ✓');
+  }
+}
+
+function cancelLiveSession() {
+  if (liveSessionActive && !confirm('Cancel this session? Your time will not be saved.')) return;
+  resetLiveSession();
+}
+
+function stopLiveSessionSilently() {
+  clearInterval(liveElapsedInterval);
+  liveSessionActive = false;
+  liveStartTime = null;
+}
+
+function resetLiveSession() {
+  clearInterval(liveElapsedInterval);
+  liveSessionActive = false;
+  liveStartTime = null;
+  document.getElementById('live-setup').style.display = 'block';
+  document.getElementById('live-running').style.display = 'none';
+  document.getElementById('live-subj').value = '';
+  document.getElementById('live-cat').value = 'study';
+  document.getElementById('live-notes').value = '';
+  document.getElementById('live-notes-running').value = '';
+  document.getElementById('live-elapsed').textContent = '00:00:00';
+}
+
+/* ── Log Session (manual / timer / live) ──────────────── */
 async function logSession(overrides={}) {
   const date  = overrides.date  || document.getElementById('l-date').value;
   const subj  = overrides.subj  || document.getElementById('l-subj').value;
   const start = overrides.start || document.getElementById('l-start').value;
   const end   = overrides.end   || document.getElementById('l-end').value;
   const cat   = overrides.cat   || document.getElementById('l-cat').value;
-  const notes = overrides.notes || document.getElementById('l-notes').value.trim();
+  const notes = overrides.notes !== undefined ? overrides.notes : document.getElementById('l-notes').value.trim();
 
   if (!date)  { toast('Pick a date', true); return false; }
   if (!subj)  { toast('Select a subject', true); return false; }
@@ -251,7 +393,7 @@ async function logSession(overrides={}) {
   if (error) { toast('Error: ' + error.message, true); return false; }
   allSessions.unshift(data);
 
-  // Reset form if not from timer
+  // Reset manual form if not from timer/live
   if (!overrides.subj) {
     document.getElementById('l-subj').value = '';
     document.getElementById('l-start').value = '';
@@ -318,7 +460,7 @@ function sessionHTML(s, showDelete=true) {
   return `<div class="si">
     <div class="s-dot" style="background:${CAT_COLORS[s.category]}"></div>
     <div class="s-body">
-      <div class="s-sub">${CAT_EMOJI[s.category]} ${s.subject}</div>
+      <div class="s-sub">${s.subject}</div>
       <div class="s-meta">${s.date} · ${fmtTime(s.start_time)}–${fmtTime(s.end_time)} · ${s.category}</div>
       ${s.notes ? `<div class="s-note">${s.notes}</div>` : ''}
     </div>
@@ -331,7 +473,8 @@ function sessionHTML(s, showDelete=true) {
 }
 
 function statCards(stats) {
-  return stats.map(s => `<div class="stat-card"><div class="stat-v${s.accent?' accent':''}">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  return stats.map(s => `<div class="stat-card"><div class="stat-v${s.accent?' accent':''}">
+    ${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
 }
 
 /* ── Dashboard ───────────────────────────────────────── */
@@ -353,7 +496,6 @@ function renderDashboard() {
     {v: topSubj || '–', l: 'Top Subject'},
   ]);
 
-  // Mini bar chart
   const byDay = week.map(d => allSessions.filter(s=>s.date===d).reduce((a,s)=>a+s.duration,0));
   const maxMins = Math.max(...byDay, 30);
   document.getElementById('dash-week-chart').innerHTML = week.map((d,i) => {
@@ -362,11 +504,11 @@ function renderDashboard() {
     return `<div class="bc">
       <div class="bar-val">${byDay[i]?(byDay[i]/60).toFixed(1)+'h':''}</div>
       <div class="bwrap"><div class="bar${isToday?' today':''}"><div class="bar-fill" style="height:${pct}%"></div></div></div>
-      <div class="bar-day${isToday?' today-d':''}">${DAY_NAMES[i].slice(0,2)}</div>
+      <div class="bar-day${isToday?' today-d':''}">
+        ${DAY_NAMES[i].slice(0,2)}</div>
     </div>`;
   }).join('');
 
-  // Top subjects
   const sm = {};
   allSessions.forEach(s => sm[s.subject]=(sm[s.subject]||0)+s.duration);
   const sorted = Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,5);
@@ -375,7 +517,6 @@ function renderDashboard() {
     ? sorted.map(([n,m]) => `<div class="subj-row"><div class="subj-top"><span class="subj-n">${n}</span><span class="subj-v">${fmtD(m)}</span></div><div class="subj-bw"><div class="subj-bf" style="width:${Math.round(m/maxS*100)}%"></div></div></div>`).join('')
     : '<div class="empty">No sessions yet.</div>';
 
-  // Recent
   const recent = allSessions.slice(0,5);
   document.getElementById('dash-recent').innerHTML = recent.length
     ? recent.map(s=>sessionHTML(s)).join('')
@@ -434,7 +575,7 @@ function exportCSV() {
   const blob = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `studylog-${todayStr()}.csv`;
+  a.download = `logthat-${todayStr()}.csv`;
   a.click();
   toast('CSV exported ✓');
 }
@@ -470,7 +611,8 @@ function renderWeekly() {
     return `<div class="bc">
       <div class="bar-val">${dm[i]?(dm[i]/60).toFixed(1)+'h':''}</div>
       <div class="bwrap"><div class="bar${isT?' today':''}"><div class="bar-fill" style="height:${pct}%"></div></div></div>
-      <div class="bar-day${isT?' today-d':''}">${DAY_NAMES[new Date(d+'T00:00').getDay()].slice(0,2)}</div>
+      <div class="bar-day${isT?' today-d':''}">
+        ${DAY_NAMES[new Date(d+'T00:00').getDay()].slice(0,2)}</div>
     </div>`;
   }).join('');
 
@@ -482,7 +624,7 @@ function renderWeekly() {
   const maxC = Math.max(...Object.values(cm),1);
   document.getElementById('wk-cats').innerHTML = Object.keys(cm).length
     ? Object.entries(cm).sort((a,b)=>b[1]-a[1]).map(([c,m]) =>
-        `<div class="cat-row"><div class="cat-top"><span class="cat-n">${CAT_EMOJI[c]} ${c}</span><span class="cat-v">${fmtD(m)}</span></div><div class="cat-bw"><div class="cat-bf" style="width:${Math.round(m/maxC*100)}%;background:${CAT_COLORS[c]}"></div></div></div>`
+        `<div class="cat-row"><div class="cat-top"><span class="cat-n">${c}</span><span class="cat-v">${fmtD(m)}</span></div><div class="cat-bw"><div class="cat-bf" style="width:${Math.round(m/maxC*100)}%;background:${CAT_COLORS[c]}"></div></div></div>`
       ).join('')
     : '<div class="empty">No data.</div>';
 }
@@ -515,7 +657,6 @@ function renderMonthly() {
   const fd  = new Date(y,m,1).getDay();
   const dim = new Date(y,m+1,0).getDate();
   const todayFull = todayStr();
-  const isCur = new Date().getFullYear()===y && new Date().getMonth()===m;
 
   let cells = '';
   for (let i=0;i<fd;i++) cells += '<div></div>';
@@ -524,21 +665,19 @@ function renderMonthly() {
     const bg = hrs===0?'var(--surface2)':hrs<=1?'#2d5a27':hrs<=3?'#4a8c3f':hrs<=5?'#6ab84f':'#8de56a';
     const ds = prefix+String(d).padStart(2,'0');
     const isT = ds === todayFull;
-    cells += `<div class="cd${mins?' has-data':''}${isT?' today':''}" style="background:${bg}" 
+    cells += `<div class="cd${mins?' has-data':''}${isT?' today':''}" style="background:${bg}"
       onclick="${mins?`showDayDetail('${ds}')`:'void(0)'}" title="${fmtD(mins)}">${d}</div>`;
   }
   document.getElementById('m-cal').innerHTML = cells;
 
-  // Top subjects
   const sm={};
   ms.forEach(s=>sm[s.subject]=(sm[s.subject]||0)+s.duration);
   const sorted=Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const maxS=sorted[0]?.[1]||1;
   document.getElementById('m-subjs').innerHTML = sorted.length
-    ? sorted.map(([n,m])=>`<div class="subj-row"><div class="subj-top"><span class="subj-n">${n}</span><span class="subj-v">${fmtD(m)}</span></div><div class="subj-bw"><div class="subj-bf" style="width:${Math.round(m/maxS*100)}%"></div></div></div>`).join('')
+    ? sorted.map(([n,mv])=>`<div class="subj-row"><div class="subj-top"><span class="subj-n">${n}</span><span class="subj-v">${fmtD(mv)}</span></div><div class="subj-bw"><div class="subj-bf" style="width:${Math.round(mv/maxS*100)}%"></div></div></div>`).join('')
     : '<div class="empty">No data.</div>';
 
-  // Streak
   const ds = new Set(allSessions.map(s=>s.date));
   let streak=0,tmp=0,best=0,prev=null;
   const nd=new Date(); let dd=new Date(nd);
@@ -546,7 +685,6 @@ function renderMonthly() {
   [...ds].sort().forEach(x=>{tmp=prev?(new Date(x)-new Date(prev))/86400000===1?tmp+1:1:1;if(tmp>best)best=tmp;prev=x;});
   document.getElementById('m-streak').innerHTML = `<div class="streak-n">${streak}</div><div class="streak-l">day streak 🔥</div><div class="streak-s">Best: ${best} days<br>Total days studied: ${ds.size}</div>`;
 
-  // Hide day panel if month changed
   document.getElementById('day-detail').style.display='none';
 }
 
@@ -577,7 +715,7 @@ let timerMode = 'focus';
 let timerStartWall = null;
 let timerEndWall = null;
 
-const CIRCUMFERENCE = 2 * Math.PI * 96; // r=96
+const CIRCUMFERENCE = 2 * Math.PI * 96;
 document.getElementById('ring-progress').style.strokeDasharray = CIRCUMFERENCE;
 document.getElementById('ring-progress').style.strokeDashoffset = 0;
 
@@ -687,14 +825,14 @@ function dismissTimerSave() {
   timerStartWall=null; timerEndWall=null;
 }
 
-/* ── Duration preview on log form ────────────────────── */
+/* ── Duration preview ────────────────────────────────── */
 function updateDurPreview() {
   const s=document.getElementById('l-start').value, e=document.getElementById('l-end').value, el=document.getElementById('dur-p');
   if(s&&e){const d=t2m(e)-t2m(s);el.textContent=d>0?`Duration: ${fmtD(d)}`:'End must be after start';el.className='dur-preview'+(d>0?' has':'');}
   else{el.textContent='Enter start and end times to preview duration';el.className='dur-preview';}
 }
 
-/* ── Subject Manager Modal ───────────────────────────── */
+/* ── Subject Manager ─────────────────────────────────── */
 function showSubjectManager() {
   renderSubjectChips();
   openModal('modal-subjects');
@@ -745,12 +883,18 @@ async function renderAchievements() {
   }).join('');
 }
 
-/* ── Profile theme ───────────────────────────────────── */
+/* ── Theme ───────────────────────────────────────────── */
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
 }
 
-/* ── Modal helpers ───────────────────────────────────── */
+// Profile theme dropdown — preview only, save on button click
+document.getElementById('p-theme').addEventListener('change', function() {
+  applyTheme(this.value);
+  // Do NOT save here — only preview
+});
+
+/* ── Modals ──────────────────────────────────────────── */
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
@@ -796,7 +940,7 @@ document.getElementById('new-subject-input').addEventListener('keydown', e=>{ if
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
 
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams  = new URLSearchParams(window.location.search);
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
   const isEmailConfirmation =
@@ -805,15 +949,14 @@ document.getElementById('new-subject-input').addEventListener('keydown', e=>{ if
     window.location.hash.includes('type=signup');
 
   if (isEmailConfirmation) {
+    // Sign out any auto-session Supabase may have created after confirm click
     await sb.auth.signOut();
-
     currentUser = null;
     document.getElementById('app').classList.add('hidden');
     document.getElementById('auth-screen').style.display = 'flex';
+    // Always land on LOGIN panel after confirmation — not dashboard
     showPanel('login');
-
-    authMsg('Email confirmed! Please log in to continue.', 'ok');
-
+    authMsg('Email confirmed! You can now log in.', 'ok');
     window.history.replaceState({}, document.title, window.location.pathname);
     return;
   }
