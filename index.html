@@ -25,12 +25,10 @@
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-icon">
-        <i data-lucide="layers" style="width:20px;height:20px;color:#0a1208"></i>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <span>logthat</span>
     </div>
-
-    <!-- Login -->
     <div id="auth-login" class="auth-panel active">
       <h2>Welcome back</h2>
       <p class="auth-sub">Sign in to your account</p>
@@ -40,8 +38,6 @@
       <button class="btn-primary full" onclick="doLogin()">Sign in</button>
       <p class="auth-switch">No account? <button onclick="showPanel('signup')">Sign up</button></p>
     </div>
-
-    <!-- Sign Up -->
     <div id="auth-signup" class="auth-panel">
       <h2>Create account</h2>
       <p class="auth-sub">Start tracking your studies</p>
@@ -51,8 +47,6 @@
       <button class="btn-primary full" onclick="doSignup()">Create account</button>
       <p class="auth-switch">Have an account? <button onclick="showPanel('login')">Sign in</button></p>
     </div>
-
-    <!-- Forgot -->
     <div id="auth-forgot" class="auth-panel">
       <h2>Reset password</h2>
       <p class="auth-sub">We'll send a reset link to your email</p>
@@ -60,49 +54,30 @@
       <button class="btn-primary full" onclick="doForgot()">Send reset link</button>
       <p class="auth-switch"><button onclick="showPanel('login')">← Back to login</button></p>
     </div>
-
     <div class="auth-msg" id="auth-msg"></div>
   </div>
 </div>
 
 <!-- ═══ APP ═══════════════════════════════════════════════ -->
 <div id="app" class="app hidden">
-
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-top">
       <div class="logo">
-        <div class="logo-icon"><i data-lucide="layers" style="width:16px;height:16px;color:#0a1208"></i></div>
+        <div class="logo-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
         <span>logthat</span>
       </div>
       <nav class="nav">
-        <button class="nb active" data-tab="dashboard">
-          <i data-lucide="layout-dashboard" style="width:16px;height:16px"></i> Dashboard
-        </button>
-        <button class="nb" data-tab="log">
-          <i data-lucide="plus-circle" style="width:16px;height:16px"></i> Log Session
-        </button>
-        <button class="nb" data-tab="timer">
-          <i data-lucide="timer" style="width:16px;height:16px"></i> Timer
-        </button>
-        <button class="nb" data-tab="tasks">
-          <i data-lucide="check-square" style="width:16px;height:16px"></i> Tasks
-        </button>
-        <button class="nb" data-tab="sessions">
-          <i data-lucide="clipboard-list" style="width:16px;height:16px"></i> Sessions
-        </button>
-        <button class="nb" data-tab="weekly">
-          <i data-lucide="bar-chart-2" style="width:16px;height:16px"></i> Weekly
-        </button>
-        <button class="nb" data-tab="monthly">
-          <i data-lucide="calendar" style="width:16px;height:16px"></i> Monthly
-        </button>
-        <button class="nb" data-tab="achievements">
-          <i data-lucide="award" style="width:16px;height:16px"></i> Badges
-        </button>
-        <button class="nb" data-tab="profile">
-          <i data-lucide="user-circle" style="width:16px;height:16px"></i> Profile
-        </button>
+        <button class="nb active" data-tab="dashboard"><i data-lucide="layout-dashboard" style="width:16px;height:16px;flex-shrink:0"></i> Dashboard</button>
+        <button class="nb" data-tab="log"><i data-lucide="plus-circle" style="width:16px;height:16px;flex-shrink:0"></i> Log Session</button>
+        <button class="nb" data-tab="timer"><i data-lucide="timer" style="width:16px;height:16px;flex-shrink:0"></i> Timer</button>
+        <button class="nb" data-tab="tasks"><i data-lucide="check-square" style="width:16px;height:16px;flex-shrink:0"></i> Tasks</button>
+        <button class="nb" data-tab="sessions"><i data-lucide="clipboard-list" style="width:16px;height:16px;flex-shrink:0"></i> Sessions</button>
+        <button class="nb" data-tab="weekly"><i data-lucide="bar-chart-2" style="width:16px;height:16px;flex-shrink:0"></i> Weekly</button>
+        <button class="nb" data-tab="monthly"><i data-lucide="calendar" style="width:16px;height:16px;flex-shrink:0"></i> Monthly</button>
+        <button class="nb" data-tab="achievements"><i data-lucide="award" style="width:16px;height:16px;flex-shrink:0"></i> Badges</button>
+        <button class="nb" data-tab="profile"><i data-lucide="user-circle" style="width:16px;height:16px;flex-shrink:0"></i> Profile</button>
       </nav>
     </div>
     <div class="sidebar-today">
@@ -123,25 +98,28 @@
       <header class="ph"><h1>Dashboard</h1><p class="sub" id="dash-greeting"></p></header>
       <div class="dash-stats" id="dash-stats"></div>
       <div class="dash-grid">
-        <div class="dash-card">
-          <h3 class="card-title">This Week</h3>
-          <div class="mini-bar-chart" id="dash-week-chart"></div>
-        </div>
-        <div class="dash-card">
-          <h3 class="card-title">Top Subjects</h3>
-          <div id="dash-top-subjects"></div>
-        </div>
+        <div class="dash-card"><h3 class="card-title">This Week</h3><div class="mini-bar-chart" id="dash-week-chart"></div></div>
+        <div class="dash-card"><h3 class="card-title">Top Subjects</h3><div id="dash-top-subjects"></div></div>
       </div>
-      <div class="dash-card mt-12">
-        <h3 class="card-title">Recent Sessions</h3>
-        <div class="slist" id="dash-recent"></div>
-      </div>
+      <div class="dash-card mt-12"><h3 class="card-title">Recent Sessions</h3><div class="slist" id="dash-recent"></div></div>
     </section>
 
     <!-- ─── LOG SESSION ─────────────────────────────────── -->
     <section class="tab" id="tab-log">
-      <header class="ph"><h1>Log a Session</h1><p class="sub">Record what you studied.</p></header>
-      <div class="form-card">
+      <header class="ph"><h1>Log a Session</h1><p class="sub">Choose how you want to record your study time.</p></header>
+
+      <!-- Mode toggle -->
+      <div class="log-mode-bar">
+        <button class="lmb active" id="lmb-manual" onclick="switchLogMode('manual')">
+          <i data-lucide="pencil" style="width:14px;height:14px"></i> Log Manually
+        </button>
+        <button class="lmb" id="lmb-live" onclick="switchLogMode('live')">
+          <i data-lucide="radio" style="width:14px;height:14px"></i> Live Session
+        </button>
+      </div>
+
+      <!-- Manual -->
+      <div class="form-card" id="panel-manual">
         <div class="gr2">
           <div class="field"><label>Date</label><input type="date" id="l-date"/></div>
           <div class="field">
@@ -154,12 +132,12 @@
           <div class="field"><label>End</label><input type="time" id="l-end"/></div>
           <div class="field"><label>Category</label>
             <select id="l-cat">
-              <option value="study">Study</option>
-              <option value="review">Review</option>
-              <option value="practice">Practice</option>
-              <option value="reading">Reading</option>
-              <option value="lecture">Lecture</option>
-              <option value="project">Project</option>
+              <option value="study">📚 Study</option>
+              <option value="review">🔁 Review</option>
+              <option value="practice">✏️ Practice</option>
+              <option value="reading">📖 Reading</option>
+              <option value="lecture">🎓 Lecture</option>
+              <option value="project">💻 Project</option>
             </select>
           </div>
         </div>
@@ -168,6 +146,50 @@
         <button class="btn-primary" onclick="logSession()">
           <i data-lucide="save" style="width:15px;height:15px"></i> Save Session
         </button>
+      </div>
+
+      <!-- Live -->
+      <div class="form-card" id="panel-live" style="display:none">
+        <!-- Setup state -->
+        <div id="live-setup">
+          <p class="live-hint"><i data-lucide="info" style="width:14px;height:14px;vertical-align:-2px"></i> Pick what you'll study, hit <strong>Start</strong>. The end time is recorded automatically when you stop.</p>
+          <div class="gr2" style="margin-top:1rem">
+            <div class="field">
+              <label>Subject <button class="link-btn" onclick="showSubjectManager()">+ Manage</button></label>
+              <select id="live-subj"><option value="">Select subject…</option></select>
+            </div>
+            <div class="field"><label>Category</label>
+              <select id="live-cat">
+                <option value="study">📚 Study</option>
+                <option value="review">🔁 Review</option>
+                <option value="practice">✏️ Practice</option>
+                <option value="reading">📖 Reading</option>
+                <option value="lecture">🎓 Lecture</option>
+                <option value="project">💻 Project</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Notes <span class="opt">(optional)</span></label><textarea id="live-notes-pre" placeholder="What are you going to work on?"></textarea></div>
+          <button class="btn-primary" onclick="startLiveSession()">
+            <i data-lucide="play" style="width:14px;height:14px"></i> Start Session
+          </button>
+        </div>
+        <!-- Running state -->
+        <div id="live-running" style="display:none">
+          <div class="live-clock-wrap">
+            <div class="live-pulse-dot"></div>
+            <div class="live-clock" id="live-elapsed">00:00:00</div>
+            <div class="live-subject-name" id="live-subj-display"></div>
+            <div class="live-started-at" id="live-started-label"></div>
+          </div>
+          <div class="field" style="margin-top:1rem"><label>Notes <span class="opt">(update anytime)</span></label><textarea id="live-notes-run" placeholder="Key takeaways…"></textarea></div>
+          <div style="display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap">
+            <button class="btn-stop" onclick="stopLiveSession()">
+              <i data-lucide="square" style="width:14px;height:14px"></i> Stop &amp; Save
+            </button>
+            <button class="btn-secondary" onclick="cancelLiveSession()">Cancel</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -199,17 +221,15 @@
           <div class="tss-inner">
             <p class="tss-title">Session complete! Save it?</p>
             <div class="gr2" style="margin-top:10px">
-              <div class="field"><label>Subject</label>
-                <select id="t-subj"><option value="">Select…</option></select>
-              </div>
+              <div class="field"><label>Subject</label><select id="t-subj"><option value="">Select…</option></select></div>
               <div class="field"><label>Category</label>
                 <select id="t-cat">
-                  <option value="study">Study</option>
-                  <option value="review">Review</option>
-                  <option value="practice">Practice</option>
-                  <option value="reading">Reading</option>
-                  <option value="lecture">Lecture</option>
-                  <option value="project">Project</option>
+                  <option value="study">📚 Study</option>
+                  <option value="review">🔁 Review</option>
+                  <option value="practice">✏️ Practice</option>
+                  <option value="reading">📖 Reading</option>
+                  <option value="lecture">🎓 Lecture</option>
+                  <option value="project">💻 Project</option>
                 </select>
               </div>
             </div>
@@ -223,16 +243,14 @@
         <div class="timer-custom-wrap" id="timer-custom-wrap" style="display:none">
           <div class="tss-inner">
             <p class="tss-title">Custom duration</p>
-            <div class="field" style="margin-top:10px"><label>Minutes</label><input type="number" id="custom-mins" min="1" max="240" value="45" style="width:100%"/></div>
+            <div class="field" style="margin-top:10px"><label>Minutes</label><input type="number" id="custom-mins" min="1" max="240" value="45"/></div>
             <div style="display:flex;gap:8px;margin-top:10px">
               <button class="btn-primary" onclick="applyCustomTimer()">Set Timer</button>
               <button class="btn-secondary" onclick="document.getElementById('timer-custom-wrap').style.display='none'">Cancel</button>
             </div>
           </div>
         </div>
-        <div class="timer-pomodoro-count">
-          <span id="pomodoro-count">0</span> pomodoros completed today
-        </div>
+        <div class="timer-pomodoro-count"><span id="pomodoro-count">0</span> pomodoros completed today</div>
       </div>
     </section>
 
@@ -240,48 +258,46 @@
     <section class="tab" id="tab-tasks">
       <header class="ph">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <h1>Tasks</h1>
-            <p class="sub">Your daily, weekly, and monthly goals.</p>
-          </div>
+          <div><h1>Tasks</h1><p class="sub">Daily, weekly, monthly goals — with a mini calendar.</p></div>
           <button class="btn-primary" onclick="openModal('modal-add-task')">
             <i data-lucide="plus" style="width:15px;height:15px"></i> New Task
           </button>
         </div>
       </header>
 
-      <!-- Filter tabs -->
-      <div class="task-filter-tabs">
-        <button class="tft active" data-filter="all" onclick="setTaskFilter('all')">
-          <i data-lucide="list" style="width:14px;height:14px"></i> All
-        </button>
-        <button class="tft" data-filter="daily" onclick="setTaskFilter('daily')">
-          <i data-lucide="sun" style="width:14px;height:14px"></i> Daily
-        </button>
-        <button class="tft" data-filter="weekly" onclick="setTaskFilter('weekly')">
-          <i data-lucide="calendar-days" style="width:14px;height:14px"></i> Weekly
-        </button>
-        <button class="tft" data-filter="monthly" onclick="setTaskFilter('monthly')">
-          <i data-lucide="calendar-range" style="width:14px;height:14px"></i> Monthly
-        </button>
-        <button class="tft" data-filter="goals" onclick="setTaskFilter('goals')">
-          <i data-lucide="target" style="width:14px;height:14px"></i> Goals
-        </button>
-      </div>
-
-      <!-- Progress summary -->
-      <div class="task-progress-bar-wrap" id="task-progress-wrap">
-        <div class="task-progress-info">
-          <span id="task-progress-label">0 of 0 completed</span>
-          <span id="task-progress-pct">0%</span>
+      <div class="tasks-layout">
+        <!-- Left: task list -->
+        <div class="tasks-main">
+          <!-- Filter tabs -->
+          <div class="task-filter-tabs">
+            <button class="tft active" data-filter="all"     onclick="setTaskFilter('all')"><i data-lucide="list" style="width:13px;height:13px"></i> All</button>
+            <button class="tft" data-filter="daily"   onclick="setTaskFilter('daily')"><i data-lucide="sun" style="width:13px;height:13px"></i> Daily</button>
+            <button class="tft" data-filter="weekly"  onclick="setTaskFilter('weekly')"><i data-lucide="calendar-days" style="width:13px;height:13px"></i> Weekly</button>
+            <button class="tft" data-filter="monthly" onclick="setTaskFilter('monthly')"><i data-lucide="calendar-range" style="width:13px;height:13px"></i> Monthly</button>
+            <button class="tft" data-filter="goals"   onclick="setTaskFilter('goals')"><i data-lucide="target" style="width:13px;height:13px"></i> Goals</button>
+          </div>
+          <!-- Progress -->
+          <div class="task-progress-wrap">
+            <div class="task-prog-info"><span id="task-prog-label">0 of 0 completed</span><span id="task-prog-pct">0%</span></div>
+            <div class="task-prog-track"><div class="task-prog-fill" id="task-prog-fill"></div></div>
+          </div>
+          <!-- List -->
+          <div id="tasks-container"></div>
         </div>
-        <div class="task-progress-track">
-          <div class="task-progress-fill" id="task-progress-fill"></div>
+
+        <!-- Right: mini task calendar -->
+        <div class="tasks-sidebar">
+          <div class="mini-cal-card">
+            <div class="mini-cal-header">
+              <button class="mini-cal-nav" onclick="taskCalPrev()"><i data-lucide="chevron-left" style="width:14px;height:14px"></i></button>
+              <span class="mini-cal-title" id="task-cal-title"></span>
+              <button class="mini-cal-nav" onclick="taskCalNext()"><i data-lucide="chevron-right" style="width:14px;height:14px"></i></button>
+            </div>
+            <div class="mini-cal-wd"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+            <div class="mini-cal-grid" id="task-cal-grid"></div>
+          </div>
         </div>
       </div>
-
-      <!-- Task lists -->
-      <div id="tasks-container"></div>
     </section>
 
     <!-- ─── SESSIONS ─────────────────────────────────── -->
@@ -307,9 +323,7 @@
     <section class="tab" id="tab-weekly">
       <header class="ph"><h1>Weekly Overview</h1><p class="sub" id="wk-range"></p></header>
       <div class="stat-row" id="wk-stats"></div>
-      <div class="chart-card">
-        <div class="bar-chart" id="wk-chart"></div>
-      </div>
+      <div class="chart-card"><div class="bar-chart" id="wk-chart"></div></div>
       <div class="two-col">
         <div><h3 class="card-title">Sessions This Week</h3><div class="slist" id="wk-list"></div></div>
         <div><h3 class="card-title">By Category</h3><div id="wk-cats"></div></div>
@@ -322,12 +336,8 @@
         <div style="display:flex;align-items:center;justify-content:space-between">
           <h1 id="m-heading">May 2026</h1>
           <div style="display:flex;gap:6px">
-            <button class="nav-arrow" onclick="changeMonth(-1)">
-              <i data-lucide="chevron-left" style="width:16px;height:16px"></i>
-            </button>
-            <button class="nav-arrow" onclick="changeMonth(1)">
-              <i data-lucide="chevron-right" style="width:16px;height:16px"></i>
-            </button>
+            <button class="nav-arrow" onclick="changeMonth(-1)"><i data-lucide="chevron-left" style="width:16px;height:16px"></i></button>
+            <button class="nav-arrow" onclick="changeMonth(1)"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></button>
           </div>
         </div>
       </header>
@@ -346,9 +356,7 @@
       <div class="day-detail-panel" id="day-detail" style="display:none">
         <div class="ddp-header">
           <h3 id="ddp-title">Sessions for May 22</h3>
-          <button onclick="document.getElementById('day-detail').style.display='none'">
-            <i data-lucide="x" style="width:16px;height:16px"></i>
-          </button>
+          <button onclick="document.getElementById('day-detail').style.display='none'"><i data-lucide="x" style="width:16px;height:16px"></i></button>
         </div>
         <div class="slist" id="ddp-list"></div>
       </div>
@@ -373,20 +381,14 @@
         <div class="field"><label>Account Email</label><input type="email" id="p-email" disabled style="opacity:0.5"/></div>
         <div class="field"><label>Daily Study Goal</label>
           <select id="p-goal">
-            <option value="60">1 hour</option>
-            <option value="120">2 hours</option>
-            <option value="180">3 hours</option>
-            <option value="240" selected>4 hours</option>
-            <option value="300">5 hours</option>
-            <option value="360">6 hours</option>
+            <option value="60">1 hour</option><option value="120">2 hours</option><option value="180">3 hours</option>
+            <option value="240" selected>4 hours</option><option value="300">5 hours</option><option value="360">6 hours</option>
           </select>
         </div>
         <div class="field"><label>Theme</label>
           <select id="p-theme" onchange="applyTheme(this.value)">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="green">Forest</option>
-            <option value="blue">Ocean</option>
+            <option value="dark">Dark</option><option value="light">Light</option>
+            <option value="green">Forest</option><option value="blue">Ocean</option>
           </select>
         </div>
         <div style="display:flex;gap:10px;margin-top:4px">
@@ -408,10 +410,7 @@
 <!-- Subject Manager -->
 <div class="modal-overlay" id="modal-subjects" onclick="closeModal('modal-subjects')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Manage Subjects</h3>
-      <button onclick="closeModal('modal-subjects')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
-    </div>
+    <div class="modal-header"><h3>Manage Subjects</h3><button onclick="closeModal('modal-subjects')"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
     <div class="field"><label>New Subject</label>
       <div style="display:flex;gap:8px">
         <input type="text" id="new-subject-input" placeholder="e.g. AZ900, Linux, Python…" style="flex:1"/>
@@ -425,10 +424,7 @@
 <!-- Edit Session -->
 <div class="modal-overlay" id="modal-edit" onclick="closeModal('modal-edit')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Edit Session</h3>
-      <button onclick="closeModal('modal-edit')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
-    </div>
+    <div class="modal-header"><h3>Edit Session</h3><button onclick="closeModal('modal-edit')"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
     <div class="gr2">
       <div class="field"><label>Date</label><input type="date" id="e-date"/></div>
       <div class="field"><label>Subject</label><select id="e-subj"></select></div>
@@ -438,64 +434,110 @@
       <div class="field"><label>End</label><input type="time" id="e-end"/></div>
       <div class="field"><label>Category</label>
         <select id="e-cat">
-          <option value="study">Study</option>
-          <option value="review">Review</option>
-          <option value="practice">Practice</option>
-          <option value="reading">Reading</option>
-          <option value="lecture">Lecture</option>
-          <option value="project">Project</option>
+          <option value="study">📚 Study</option><option value="review">🔁 Review</option>
+          <option value="practice">✏️ Practice</option><option value="reading">📖 Reading</option>
+          <option value="lecture">🎓 Lecture</option><option value="project">💻 Project</option>
         </select>
       </div>
     </div>
     <div class="field"><label>Notes</label><textarea id="e-notes"></textarea></div>
     <input type="hidden" id="e-id"/>
-    <button class="btn-primary" onclick="saveEdit()">
-      <i data-lucide="save" style="width:15px;height:15px"></i> Save Changes
-    </button>
+    <button class="btn-primary" onclick="saveEdit()"><i data-lucide="save" style="width:15px;height:15px"></i> Save Changes</button>
   </div>
 </div>
 
 <!-- Add Task Modal -->
 <div class="modal-overlay" id="modal-add-task" onclick="closeModal('modal-add-task')">
   <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      <h3>New Task</h3>
-      <button onclick="closeModal('modal-add-task')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
-    </div>
-    <div class="field">
-      <label>Task Title</label>
-      <input type="text" id="task-title-input" placeholder="What do you need to do?"/>
+    <div class="modal-header"><h3>New Task</h3><button onclick="closeModal('modal-add-task')"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
+    <div class="field"><label>Task Title</label><input type="text" id="task-title-input" placeholder="What do you need to do?"/></div>
+    <div class="gr2">
+      <div class="field"><label>Subject <button class="link-btn" onclick="showTaskSubjectManager()">+ Manage</button></label>
+        <select id="task-subj-input"><option value="">No subject</option></select>
+      </div>
+      <div class="field"><label>Type</label>
+        <select id="task-type-input">
+          <option value="daily">Daily</option><option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option><option value="goals">Goal</option>
+        </select>
+      </div>
     </div>
     <div class="gr2">
-      <div class="field">
-        <label>Type</label>
-        <select id="task-type-input">
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="goals">Goal</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Priority</label>
+      <div class="field"><label>Priority</label>
         <select id="task-priority-input">
-          <option value="low">Low</option>
-          <option value="medium" selected>Medium</option>
-          <option value="high">High</option>
+          <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>
+        </select>
+      </div>
+      <div class="field"><label>Category</label>
+        <select id="task-cat-input">
+          <option value="">None</option>
+          <option value="study">📚 Study</option><option value="review">🔁 Review</option>
+          <option value="practice">✏️ Practice</option><option value="reading">📖 Reading</option>
+          <option value="lecture">🎓 Lecture</option><option value="project">💻 Project</option>
         </select>
       </div>
     </div>
-    <div class="field">
-      <label>Due Date <span class="opt">(optional)</span></label>
-      <input type="date" id="task-due-input"/>
+    <div class="gr2">
+      <div class="field"><label>Start Date &amp; Time <span class="opt">(optional)</span></label>
+        <input type="datetime-local" id="task-start-input"/>
+      </div>
+      <div class="field"><label>End Date &amp; Time <span class="opt">(optional)</span></label>
+        <input type="datetime-local" id="task-end-input"/>
+      </div>
     </div>
-    <div class="field">
-      <label>Notes <span class="opt">(optional)</span></label>
-      <textarea id="task-notes-input" placeholder="Add more details…" style="min-height:56px"></textarea>
+    <div class="field"><label>Notes <span class="opt">(optional)</span></label><textarea id="task-notes-input" placeholder="Add details…" style="min-height:52px"></textarea></div>
+    <button class="btn-primary full" onclick="addTask()"><i data-lucide="plus" style="width:15px;height:15px"></i> Add Task</button>
+  </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal-overlay" id="modal-edit-task" onclick="closeModal('modal-edit-task')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Edit Task</h3><button onclick="closeModal('modal-edit-task')"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
+    <div class="field"><label>Task Title</label><input type="text" id="et-title"/></div>
+    <div class="gr2">
+      <div class="field"><label>Subject</label><select id="et-subj"><option value="">No subject</option></select></div>
+      <div class="field"><label>Type</label>
+        <select id="et-type">
+          <option value="daily">Daily</option><option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option><option value="goals">Goal</option>
+        </select>
+      </div>
     </div>
-    <button class="btn-primary full" onclick="addTask()">
-      <i data-lucide="plus" style="width:15px;height:15px"></i> Add Task
-    </button>
+    <div class="gr2">
+      <div class="field"><label>Priority</label>
+        <select id="et-priority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+      </div>
+      <div class="field"><label>Category</label>
+        <select id="et-cat">
+          <option value="">None</option>
+          <option value="study">📚 Study</option><option value="review">🔁 Review</option>
+          <option value="practice">✏️ Practice</option><option value="reading">📖 Reading</option>
+          <option value="lecture">🎓 Lecture</option><option value="project">💻 Project</option>
+        </select>
+      </div>
+    </div>
+    <div class="gr2">
+      <div class="field"><label>Start Date &amp; Time</label><input type="datetime-local" id="et-start"/></div>
+      <div class="field"><label>End Date &amp; Time</label><input type="datetime-local" id="et-end"/></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="et-notes" style="min-height:52px"></textarea></div>
+    <input type="hidden" id="et-id"/>
+    <button class="btn-primary full" onclick="saveTaskEdit()"><i data-lucide="save" style="width:15px;height:15px"></i> Save Changes</button>
+  </div>
+</div>
+
+<!-- Task Subject Manager -->
+<div class="modal-overlay" id="modal-task-subjects" onclick="closeModal('modal-task-subjects')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Task Subjects</h3><button onclick="closeModal('modal-task-subjects')"><i data-lucide="x" style="width:18px;height:18px"></i></button></div>
+    <div class="field"><label>New Subject</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="new-task-subject-input" placeholder="e.g. Cloud, DevOps, CCNA…" style="flex:1"/>
+        <button class="btn-primary" onclick="addTaskSubject()">Add</button>
+      </div>
+    </div>
+    <div class="subject-chips" id="task-subject-chips"></div>
   </div>
 </div>
 
@@ -504,9 +546,6 @@
 
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
-<script>
-  // Init Lucide icons after DOM ready
-  document.addEventListener('DOMContentLoaded', () => { lucide.createIcons(); });
-</script>
+<script>document.addEventListener('DOMContentLoaded', () => { if(window.lucide) lucide.createIcons(); });</script>
 </body>
 </html>

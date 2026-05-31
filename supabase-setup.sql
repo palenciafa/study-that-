@@ -61,3 +61,31 @@ create policy "Users manage own achievements" on achievements for all using (aut
 --     or your deployed Vercel URL
 --  3. Open supabase-config.js and paste your URL + anon key
 -- ════════════════════════════════════════════════════════
+
+-- 5. TASKS (run this if not yet added)
+create table if not exists tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  type text not null default 'daily',
+  priority text not null default 'medium',
+  category text,
+  subject text,
+  start_datetime timestamptz,
+  end_datetime timestamptz,
+  notes text,
+  done boolean default false,
+  created_at timestamptz default now()
+);
+alter table tasks enable row level security;
+create policy "Users manage own tasks" on tasks for all using (auth.uid() = user_id);
+
+-- 6. TASK SUBJECTS (separate from session subjects)
+create table if not exists task_subjects (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  name text not null,
+  created_at timestamptz default now()
+);
+alter table task_subjects enable row level security;
+create policy "Users manage own task subjects" on task_subjects for all using (auth.uid() = user_id);
