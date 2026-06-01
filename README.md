@@ -1,4 +1,4 @@
-# logthat — Setup Guide
+# logthat 
 
 ## Features
 
