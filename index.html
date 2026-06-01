@@ -187,7 +187,14 @@
             <button class="btn-stop" onclick="stopLiveSession()">
               <i data-lucide="square" style="width:14px;height:14px"></i> Stop &amp; Save
             </button>
+            <button class="btn-live-pause" id="live-pause-btn" onclick="toggleLivePause()">
+              <i data-lucide="pause" style="width:14px;height:14px"></i> Pause
+            </button>
             <button class="btn-secondary" onclick="cancelLiveSession()">Cancel</button>
+          </div>
+          <div class="live-paused-label" id="live-paused-label" style="display:none">
+            <i data-lucide="pause-circle" style="width:13px;height:13px;color:var(--warn)"></i>
+            <span style="color:var(--warn);font-size:0.78rem;font-weight:500">Session paused</span>
           </div>
         </div>
       </div>
@@ -250,7 +257,21 @@
             </div>
           </div>
         </div>
-        <div class="timer-pomodoro-count"><span id="pomodoro-count">0</span> pomodoros completed today</div>
+        <div class="timer-pomodoro-count">
+          <i data-lucide="zap" style="width:13px;height:13px;color:var(--accent);vertical-align:-2px;margin-right:4px"></i>
+          <span id="pomodoro-count">0</span> pomodoros completed today
+        </div>
+        <!-- Pomodoro history -->
+        <div id="pomo-history-wrap" style="display:none">
+          <div class="pomo-history-header">
+            <i data-lucide="history" style="width:13px;height:13px"></i>
+            <span>Session History</span>
+            <button class="pomo-clear-btn" onclick="clearPomoHistory()">
+              <i data-lucide="trash-2" style="width:12px;height:12px"></i> Clear
+            </button>
+          </div>
+          <div id="pomo-history-list"></div>
+        </div>
       </div>
     </section>
 

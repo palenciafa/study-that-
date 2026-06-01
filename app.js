@@ -38,8 +38,14 @@ let taskCalMonth = { y: new Date().getFullYear(), m: new Date().getMonth() };
 
 // Live session state
 let liveActive    = false;
+let livePaused    = false;
 let liveStartTime = null;
+let livePauseStart= null;   // when pause began
+let livePausedMs  = 0;      // total ms spent paused
 let liveInterval  = null;
+
+// Pomodoro history (in-memory, today only)
+let pomoHistory   = [];
 
 /* ── Utility ─────────────────────────────────────────── */
 function fmtD(mins) {
@@ -277,35 +283,77 @@ function startLiveSession(){
   liveInterval=setInterval(tickLive,1000); tickLive();
 }
 function tickLive(){
-  const elapsed=Math.floor((Date.now()-liveStartTime)/1000);
+  if(livePaused) return; // don't tick while paused
+  const pausedOffset = livePausedMs;
+  const elapsed=Math.floor((Date.now()-liveStartTime-pausedOffset)/1000);
   const h=Math.floor(elapsed/3600),m=Math.floor((elapsed%3600)/60),s=elapsed%60;
   document.getElementById('live-elapsed').textContent=
     `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
+
+/* ── Live session pause / resume ─────────────────── */
+function toggleLivePause(){
+  if(!liveActive) return;
+  livePaused = !livePaused;
+  const btn = document.getElementById('live-pause-btn');
+  const dot = document.getElementById('live-pulse-dot');
+  const lbl = document.getElementById('live-paused-label');
+  if(livePaused){
+    livePauseStart = Date.now();
+    // Update button → Resume
+    btn.innerHTML = '<i data-lucide="play" style="width:14px;height:14px"></i> Resume';
+    btn.classList.add('resuming');
+    if(dot)  dot.style.background = 'var(--warn)';
+    if(lbl)  lbl.style.display = 'flex';
+    toast('Session paused ⏸');
+  } else {
+    // Accumulate paused duration
+    livePausedMs += Date.now() - livePauseStart;
+    livePauseStart = null;
+    btn.innerHTML = '<i data-lucide="pause" style="width:14px;height:14px"></i> Pause';
+    btn.classList.remove('resuming');
+    if(dot)  dot.style.background = 'var(--danger)';
+    if(lbl)  lbl.style.display = 'none';
+    toast('Session resumed ▶');
+  }
+  refreshIcons();
+}
 async function stopLiveSession(){
   if(!liveActive||!liveStartTime) return;
+  // If paused when stopped, finalise paused time
+  if(livePaused && livePauseStart) livePausedMs += Date.now() - livePauseStart;
   clearInterval(liveInterval);
   const endTime=new Date();
   const subj=document.getElementById('live-subj').value;
   const cat=document.getElementById('live-cat').value;
   const notes=document.getElementById('live-notes-run').value.trim();
   const fmt=d=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  const ok=await logSession({date:liveStartTime.toISOString().slice(0,10),subj,start:fmt(liveStartTime),end:fmt(endTime),cat,notes});
+  // Effective start = wall start + total paused ms (so duration = active time only)
+  const effectiveStart = new Date(liveStartTime.getTime() + livePausedMs);
+  const ok=await logSession({date:liveStartTime.toISOString().slice(0,10),subj,start:fmt(effectiveStart),end:fmt(endTime),cat,notes});
   if(ok) resetLiveSession();
 }
 function cancelLiveSession(){
   if(liveActive&&!confirm('Cancel? Time will not be saved.')) return;
   resetLiveSession();
 }
-function stopLiveSessionSilent(){ clearInterval(liveInterval); liveActive=false; liveStartTime=null; }
+function stopLiveSessionSilent(){ clearInterval(liveInterval); liveActive=false; livePaused=false; liveStartTime=null; livePauseStart=null; livePausedMs=0; }
 function resetLiveSession(){
-  clearInterval(liveInterval); liveActive=false; liveStartTime=null;
+  clearInterval(liveInterval);
+  liveActive=false; livePaused=false; liveStartTime=null; livePauseStart=null; livePausedMs=0;
   document.getElementById('live-setup').style.display='block';
   document.getElementById('live-running').style.display='none';
   document.getElementById('live-subj').value='';
   document.getElementById('live-notes-pre').value='';
   document.getElementById('live-notes-run').value='';
   document.getElementById('live-elapsed').textContent='00:00:00';
+  // Reset pause button and dot
+  const btn=document.getElementById('live-pause-btn');
+  if(btn){ btn.innerHTML='<i data-lucide="pause" style="width:14px;height:14px"></i> Pause'; btn.classList.remove('resuming'); }
+  const dot=document.getElementById('live-pulse-dot');
+  if(dot) dot.style.background='';
+  const lbl=document.getElementById('live-paused-label');
+  if(lbl) lbl.style.display='none';
 }
 
 /* ── Log Session ─────────────────────────────────────── */
@@ -869,12 +917,57 @@ function resetTimer(){
 function onTimerDone(){
   try{document.getElementById('timer-done-sfx').play();}catch(e){}
   document.getElementById('timer-label').textContent='DONE!';
+
+  // Build history entry
+  const modeLabels={focus:'Focus',short:'Short Break',long:'Long Break',custom:'Custom'};
+  const modeIcons ={focus:'brain',short:'coffee',long:'armchair',custom:'sliders-horizontal'};
+  const now=new Date();
+  const entryTime=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const durationMins=Math.round(timerTotal/60);
+  pomoHistory.unshift({
+    mode:timerMode,
+    label:modeLabels[timerMode]||'Timer',
+    icon:modeIcons[timerMode]||'timer',
+    duration:durationMins,
+    time:entryTime,
+    isBreak:(timerMode==='short'||timerMode==='long'),
+  });
+  renderPomoHistory();
+
   if(timerMode==='focus'||timerMode==='custom'){
     document.getElementById('timer-save-area').style.display='block';
     updateSubjectDropdowns();
     if(timerMode==='focus'){pomodoroCount++;document.getElementById('pomodoro-count').textContent=pomodoroCount;}
   }
   toast('Timer complete! 🎉');
+}
+
+/* ── Pomodoro history render ─────────────────────── */
+function renderPomoHistory(){
+  const wrap=document.getElementById('pomo-history-wrap');
+  const list=document.getElementById('pomo-history-list');
+  if(!wrap||!list) return;
+  if(!pomoHistory.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  list.innerHTML=pomoHistory.map(e=>`
+    <div class="pomo-entry${e.isBreak?' break':''}">
+      <div class="pomo-entry-icon">
+        <i data-lucide="${e.icon}" style="width:15px;height:15px;color:${e.isBreak?'var(--warn)':'var(--accent)'}"></i>
+      </div>
+      <div class="pomo-entry-body">
+        <div class="pomo-entry-label">${e.label}</div>
+        <div class="pomo-entry-time">
+          <i data-lucide="clock" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px"></i>${e.time}
+        </div>
+      </div>
+      <div class="pomo-entry-dur">${e.duration}m</div>
+    </div>`).join('');
+  refreshIcons();
+}
+
+function clearPomoHistory(){
+  pomoHistory=[];
+  renderPomoHistory();
 }
 async function saveTimerSession(){
   const subj=document.getElementById('t-subj').value;
