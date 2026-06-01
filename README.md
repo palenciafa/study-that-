@@ -1,5 +1,13 @@
 # logthat 
 
+Use this study tracker I made — logthat!
+
+I created logthat web application to help students stay consistent, organized, and motivated with their study habits.
+
+With logthat, you can log your study sessions, track your weekly and monthly progress, use a Pomodoro timer, manage your subjects, unlock achievement badges, and sync your data so you can access it from any device.
+
+Whether you’re reviewing for exams, working on projects, or building better study habits, logthat helps you see where your time goes and how much progress you’re making.
+
 ## Features
 
 | Feature | Description |
