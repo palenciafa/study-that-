@@ -1,0 +1,21 @@
+{
+  "name": "logthat!",
+  "short_name": "logthat!",
+  "description": "Track your study sessions, tasks, goals, and progress.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1208",
+  "theme_color": "#8de56a",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "140x140",
+      "type": "image/png"
+    },
+    {
+      "src": "/logthat-icon-512.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
