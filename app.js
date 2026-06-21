@@ -21,6 +21,139 @@ const CAT_LUCIDE = {
   reading:'book-marked', lecture:'graduation-cap', project:'monitor'
 };
 const CAT_EMOJI = { study:'📚', review:'🔁', practice:'✏️', reading:'📖', lecture:'🎓', project:'💻' };
+
+// Custom categories (user-defined, stored in localStorage per user)
+const BUILT_IN_CATS = ['study','review','practice','reading','lecture','project'];
+let customCategories = []; // [{id, name, color, icon}]
+
+function loadCustomCategories() {
+  if (!currentUser) return;
+  try {
+    const stored = localStorage.getItem(`logthat_custom_cats_${currentUser.id}`);
+    customCategories = stored ? JSON.parse(stored) : [];
+  } catch { customCategories = []; }
+}
+function saveCustomCategories() {
+  if (!currentUser) return;
+  localStorage.setItem(`logthat_custom_cats_${currentUser.id}`, JSON.stringify(customCategories));
+}
+
+// Get color for any category (built-in or custom)
+function getCatColor(cat) {
+  if (CAT_COLORS[cat]) return CAT_COLORS[cat];
+  const custom = customCategories.find(c => c.name === cat);
+  return custom ? custom.color : '#888888';
+}
+
+// Get lucide icon for any category
+function getCatIcon(cat) {
+  if (CAT_LUCIDE[cat]) return CAT_LUCIDE[cat];
+  const custom = customCategories.find(c => c.name === cat);
+  return custom ? (custom.icon || 'tag') : 'tag';
+}
+
+// Build <option> elements for all categories (built-in + custom)
+function buildCatOptions(selectedVal = '', includeNone = false) {
+  const builtIn = [
+    {v:'study',   l:'📚 Study'},
+    {v:'review',  l:'🔁 Review'},
+    {v:'practice',l:'✏️ Practice'},
+    {v:'reading', l:'📖 Reading'},
+    {v:'lecture', l:'🎓 Lecture'},
+    {v:'project', l:'💻 Project'},
+  ];
+  let html = includeNone ? '<option value="">None</option>' : '';
+  html += builtIn.map(o => `<option value="${o.v}"${selectedVal===o.v?' selected':''}>${o.l}</option>`).join('');
+  if (customCategories.length) {
+    html += `<optgroup label="Custom">`;
+    html += customCategories.map(c => `<option value="${c.name}"${selectedVal===c.name?' selected':''}>${c.name}</option>`).join('');
+    html += `</optgroup>`;
+  }
+  html += `<option value="__custom__">＋ Add custom category…</option>`;
+  return html;
+}
+
+// Populate all category selects in the app
+function updateCategoryDropdowns(selectedVals = {}) {
+  const selects = [
+    {id:'l-cat',       none:false, key:'l-cat'},
+    {id:'live-cat',    none:false, key:'live-cat'},
+    {id:'t-cat',       none:false, key:'t-cat'},
+    {id:'e-cat',       none:false, key:'e-cat'},
+    {id:'task-cat-input', none:true, key:'task-cat-input'},
+    {id:'et-cat',      none:true,  key:'et-cat'},
+    {id:'f-cat-full',  none:true,  key:'f-cat-full'},
+  ];
+  selects.forEach(({id, none, key}) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = selectedVals[key] !== undefined ? selectedVals[key] : el.value;
+    el.innerHTML = none
+      ? '<option value="">All categories</option>' + buildCatOptions(prev, false)
+      : buildCatOptions(prev, false);
+    // reattach change handler for "Add custom"
+    el.onchange = function() {
+      if (this.value === '__custom__') {
+        this.value = prev || '';
+        showAddCustomCategoryModal(id);
+      }
+    };
+  });
+}
+
+// Show a small prompt to add a custom category
+function showAddCustomCategoryModal(returnSelectId) {
+  openModal('modal-custom-cat');
+  document.getElementById('custom-cat-return-select').value = returnSelectId;
+  document.getElementById('custom-cat-name').value = '';
+  document.getElementById('custom-cat-color').value = '#6ab84f';
+  document.getElementById('custom-cat-icon').value = 'tag';
+}
+
+function addCustomCategory() {
+  const name = document.getElementById('custom-cat-name').value.trim();
+  const color = document.getElementById('custom-cat-color').value;
+  const icon = document.getElementById('custom-cat-icon').value.trim() || 'tag';
+  const returnId = document.getElementById('custom-cat-return-select').value;
+  if (!name) { toast('Enter a category name', true); return; }
+  if (BUILT_IN_CATS.includes(name.toLowerCase())) { toast('That\'s a built-in category', true); return; }
+  if (customCategories.find(c => c.name === name)) { toast('Category already exists', true); return; }
+  customCategories.push({ id: Date.now().toString(), name, color, icon });
+  saveCustomCategories();
+  updateCategoryDropdowns();
+  // Select the new category in the originating select
+  const el = document.getElementById(returnId);
+  if (el) el.value = name;
+  closeModal('modal-custom-cat');
+  toast(`"${name}" category added ✓`);
+}
+
+function deleteCustomCategory(name) {
+  customCategories = customCategories.filter(c => c.name !== name);
+  saveCustomCategories();
+  renderCustomCategoryChips();
+  updateCategoryDropdowns();
+}
+
+function renderCustomCategoryChips() {
+  const el = document.getElementById('custom-cat-chips');
+  if (!el) return;
+  if (!customCategories.length) {
+    el.innerHTML = '<span style="color:var(--text3);font-size:0.82rem">No custom categories yet.</span>';
+    return;
+  }
+  el.innerHTML = customCategories.map(c => `
+    <div class="chip" style="border-color:${c.color}20">
+      <span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block;margin-right:4px;flex-shrink:0"></span>
+      ${c.name}
+      <button class="chip-del" onclick="deleteCustomCategory('${c.name.replace(/'/g,"\'")}')">✕</button>
+    </div>`).join('');
+}
+
+function showCustomCategoryManager() {
+  renderCustomCategoryChips();
+  openModal('modal-manage-custom-cats');
+}
 const DAY_NAMES   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -137,6 +270,8 @@ async function initApp(user) {
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').classList.remove('hidden');
   await loadProfile();
+  loadCustomCategories();
+  updateCategoryDropdowns();
   await loadSubjects();
   await loadTaskSubjects();
   await loadSessions();
@@ -367,8 +502,10 @@ async function logSession(overrides={}){
   if(!date){toast('Pick a date',true);return false;}
   if(!subj){toast('Select a subject',true);return false;}
   if(!start||!end){toast('Enter start and end times',true);return false;}
-  const dur=t2m(end)-t2m(start);
-  if(dur<=0){toast('End must be after start',true);return false;}
+  let dur=t2m(end)-t2m(start);
+  // Handle overnight sessions (e.g. 10:00 PM → 12:30 AM crosses midnight)
+  if(dur<=0) dur+=24*60;
+  if(dur<=0||dur>24*60){toast('Session duration must be between 1 min and 24 hours',true);return false;}
   const {data,error}=await sb.from('sessions').insert({user_id:currentUser.id,date,subject:subj,start_time:start,end_time:end,duration:dur,category:cat,notes}).select().single();
   if(error){toast('Error: '+error.message,true);return false;}
   allSessions.unshift(data);
@@ -409,8 +546,10 @@ async function saveEdit(){
   const end=document.getElementById('e-end').value;
   const cat=document.getElementById('e-cat').value;
   const notes=document.getElementById('e-notes').value.trim();
-  const dur=t2m(end)-t2m(start);
-  if(dur<=0){toast('End must be after start',true);return;}
+  let dur=t2m(end)-t2m(start);
+  // Handle overnight sessions
+  if(dur<=0) dur+=24*60;
+  if(dur<=0||dur>24*60){toast('Session duration must be between 1 min and 24 hours',true);return;}
   const {error}=await sb.from('sessions').update({date,subject:subj,start_time:start,end_time:end,category:cat,notes,duration:dur}).eq('id',editingId);
   if(error){toast('Error: '+error.message,true);return;}
   const idx=allSessions.findIndex(s=>s.id===editingId);
@@ -420,12 +559,13 @@ async function saveEdit(){
 
 /* ── Session HTML ────────────────────────────────────── */
 function sessionHTML(s, showDelete=true){
-  const catIcon = CAT_LUCIDE[s.category]||'book-open';
+  const catIcon = getCatIcon(s.category);
+  const catColor = getCatColor(s.category);
   return `<div class="si">
-    <div class="s-dot" style="background:${CAT_COLORS[s.category]}"></div>
+    <div class="s-dot" style="background:${catColor}"></div>
     <div class="s-body">
       <div class="s-sub">
-        <i data-lucide="${catIcon}" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;color:${CAT_COLORS[s.category]}"></i>
+        <i data-lucide="${catIcon}" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;color:${catColor}"></i>
         ${s.subject}
       </div>
       <div class="s-meta">${s.date} · ${fmtTime(s.start_time)}–${fmtTime(s.end_time)} · ${s.category}</div>
@@ -497,6 +637,13 @@ function updateSidebar(){
 
 /* ── Sessions tab ────────────────────────────────────── */
 function renderSessions(){
+  // Refresh category filter options to include custom categories
+  const fCatEl=document.getElementById('f-cat');
+  if(fCatEl){
+    const prev=fCatEl.value;
+    fCatEl.innerHTML='<option value="">All categories</option>'+buildCatOptions('',false).replace('<option value="__custom__">＋ Add custom category…</option>','');
+    fCatEl.value=prev;
+  }
   const fc=document.getElementById('f-cat').value;
   const fs=document.getElementById('f-subj').value;
   const fq=document.getElementById('f-search').value.toLowerCase();
@@ -554,9 +701,9 @@ function renderWeekly(){
   document.getElementById('wk-cats').innerHTML=Object.keys(cm).length
     ?Object.entries(cm).sort((a,b)=>b[1]-a[1]).map(([c,m])=>`
       <div class="cat-row"><div class="cat-top">
-        <span class="cat-n"><i data-lucide="${CAT_LUCIDE[c]||'book-open'}" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;color:${CAT_COLORS[c]}"></i>${c}</span>
+        <span class="cat-n"><i data-lucide="${getCatIcon(c)}" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;color:${getCatColor(c)}"></i>${c}</span>
         <span class="cat-v">${fmtD(m)}</span></div>
-        <div class="cat-bw"><div class="cat-bf" style="width:${Math.round(m/maxC*100)}%;background:${CAT_COLORS[c]}"></div></div></div>`).join('')
+        <div class="cat-bw"><div class="cat-bf" style="width:${Math.round(m/maxC*100)}%;background:${getCatColor(c)}"></div></div></div>`).join('')
     :'<div class="empty">No data.</div>';
   refreshIcons();
 }
@@ -772,7 +919,8 @@ function renderTasks(){
       const startStr=t.start_datetime?fmtDateTime(t.start_datetime):'';
       const endStr=t.end_datetime?fmtDateTime(t.end_datetime):'';
       const isOverdue=t.end_datetime&&!t.done&&new Date(t.end_datetime)<new Date();
-      const catIcon=t.category?CAT_LUCIDE[t.category]||'book-open':'';
+      const catIcon=t.category?getCatIcon(t.category):'';
+      const catColor=t.category?getCatColor(t.category):'inherit';
       html+=`<div class="task-item ${t.done?'done':''}" data-task-id="${t.id}">
         <div class="task-check ${t.done?'checked':''}" onclick="toggleTask('${t.id}')"></div>
         <div class="task-body">
@@ -780,7 +928,7 @@ function renderTasks(){
           <div class="task-meta">
             <span class="task-badge ${t.type}">${typeLabels[t.type]}</span>
             <span class="task-badge ${t.priority}">${t.priority}</span>
-            ${t.category?`<span class="task-badge cat"><i data-lucide="${catIcon}" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px;color:${CAT_COLORS[t.category]||'inherit'}"></i>${t.category}</span>`:''}
+            ${t.category?`<span class="task-badge cat"><i data-lucide="${catIcon}" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px;color:${catColor}"></i>${t.category}</span>`:''}
             ${t.subject?`<span class="task-subj-badge">${t.subject}</span>`:''}
           </div>
           ${(startStr||endStr)?`<div class="task-time-range ${isOverdue?'overdue':''}">
@@ -989,7 +1137,12 @@ function dismissTimerSave(){
 /* ── Duration preview ────────────────────────────────── */
 function updateDurPreview(){
   const s=document.getElementById('l-start').value,e=document.getElementById('l-end').value,el=document.getElementById('dur-p');
-  if(s&&e){const d=t2m(e)-t2m(s);el.textContent=d>0?`Duration: ${fmtD(d)}`:'End must be after start';el.className='dur-preview'+(d>0?' has':'');}
+  if(s&&e){
+    let d=t2m(e)-t2m(s);
+    if(d<=0) d+=24*60; // overnight crossover
+    el.textContent=d>0?`Duration: ${fmtD(d)} ${t2m(e)<t2m(s)?'(overnight)':''}`.trim():'Invalid times';
+    el.className='dur-preview'+(d>0?' has':'');
+  }
   else{el.textContent='Enter start and end times to preview duration';el.className='dur-preview';}
 }
 

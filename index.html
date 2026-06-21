@@ -139,7 +139,8 @@
         <div class="gr3">
           <div class="field"><label>Start</label><input type="time" id="l-start"/></div>
           <div class="field"><label>End</label><input type="time" id="l-end"/></div>
-          <div class="field"><label>Category</label>
+          <div class="field">
+            <label>Category <button class="link-btn" onclick="showCustomCategoryManager()">+ Custom</button></label>
             <select id="l-cat">
               <option value="study">📚 Study</option>
               <option value="review">🔁 Review</option>
@@ -577,5 +578,59 @@
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
 <script>document.addEventListener('DOMContentLoaded', () => { if(window.lucide) lucide.createIcons(); });</script>
+
+<!-- Add Custom Category Modal -->
+<div class="modal-overlay" id="modal-custom-cat" onclick="closeModal('modal-custom-cat')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
+    <div class="modal-header">
+      <h3><i data-lucide="tag" style="width:16px;height:16px;vertical-align:-2px;margin-right:6px"></i>Add Custom Category</h3>
+      <button onclick="closeModal('modal-custom-cat')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+    </div>
+    <input type="hidden" id="custom-cat-return-select"/>
+    <div class="field">
+      <label>Category Name</label>
+      <input type="text" id="custom-cat-name" placeholder="e.g. Exam Prep, Lab Work…" maxlength="30"/>
+    </div>
+    <div class="gr2">
+      <div class="field">
+        <label>Color</label>
+        <div class="color-picker-wrap">
+          <input type="color" id="custom-cat-color" value="#6ab84f"/>
+          <div class="color-presets">
+            <button class="color-dot" style="background:#378ADD" onclick="document.getElementById('custom-cat-color').value='#378ADD'"></button>
+            <button class="color-dot" style="background:#D4537E" onclick="document.getElementById('custom-cat-color').value='#D4537E'"></button>
+            <button class="color-dot" style="background:#EF9F27" onclick="document.getElementById('custom-cat-color').value='#EF9F27'"></button>
+            <button class="color-dot" style="background:#7F77DD" onclick="document.getElementById('custom-cat-color').value='#7F77DD'"></button>
+            <button class="color-dot" style="background:#6ab84f" onclick="document.getElementById('custom-cat-color').value='#6ab84f'"></button>
+            <button class="color-dot" style="background:#D85A30" onclick="document.getElementById('custom-cat-color').value='#D85A30'"></button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Icon <span class="opt">(Lucide name)</span></label>
+        <input type="text" id="custom-cat-icon" placeholder="e.g. flask, code, music" value="tag"/>
+      </div>
+    </div>
+    <button class="btn-primary full" style="margin-top:4px" onclick="addCustomCategory()">
+      <i data-lucide="plus" style="width:14px;height:14px"></i> Add Category
+    </button>
+  </div>
+</div>
+
+<!-- Manage Custom Categories Modal -->
+<div class="modal-overlay" id="modal-manage-custom-cats" onclick="closeModal('modal-manage-custom-cats')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i data-lucide="settings-2" style="width:16px;height:16px;vertical-align:-2px;margin-right:6px"></i>Custom Categories</h3>
+      <button onclick="closeModal('modal-manage-custom-cats')"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem">Your custom categories appear in all dropdowns alongside the built-in ones.</p>
+    <div class="subject-chips" id="custom-cat-chips"></div>
+    <button class="btn-secondary" style="margin-top:1rem;width:100%" onclick="closeModal('modal-manage-custom-cats');showAddCustomCategoryModal('')">
+      <i data-lucide="plus" style="width:14px;height:14px"></i> Add Another
+    </button>
+  </div>
+</div>
+
 </body>
 </html>

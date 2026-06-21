@@ -848,3 +848,24 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   color: var(--accent); flex-shrink: 0; font-weight: 500;
 }
 .pomo-entry.break .pomo-entry-dur { color: var(--warn); }
+
+/* ═══════════════════════════════════════════════
+   CUSTOM CATEGORY — color picker
+═══════════════════════════════════════════════ */
+.color-picker-wrap {
+  display: flex; align-items: center; gap: 10px;
+}
+.color-picker-wrap input[type="color"] {
+  width: 38px; height: 38px; padding: 2px;
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--surface2); cursor: pointer; flex-shrink: 0;
+}
+.color-presets {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.color-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border2); cursor: pointer;
+  padding: 0; transition: transform 0.15s, border-color 0.15s;
+}
+.color-dot:hover { transform: scale(1.15); border-color: var(--text2); }
